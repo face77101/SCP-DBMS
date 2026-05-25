@@ -38,3 +38,13 @@ DB_HOST=你的雲端Host網址
 DB_USER=admin
 DB_PASSWORD=群組內傳的真實密碼
 ```
+### 步驟 2：安裝後端依賴套件
+切換至 backend/ 資料夾，執行以下指令安裝核心套件（包含資料庫連線與 Bcrypt 加密）：
+```text
+pip install -r requirements.txt
+```
+### 步驟 3：灌入系統初始化情報 (Seed Data)
+確認雲端 MySQL 已連線後，執行初始化腳本。此腳本會自動讀取 JSON 情報，並將密碼「自動雜湊化」後灌入雲端資料庫：
+```text
+python init_db.py
+```
