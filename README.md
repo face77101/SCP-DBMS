@@ -34,9 +34,9 @@
 在專案最外層（根目錄），你會看到 `config.env.example` 範本檔。
 請複製該檔案、重新命名為 **`config.env`**，並填入群組內私下發放的雲端 MySQL 真實連線密碼：
 ```text
-DB_HOST=你的雲端Host網址
+DB_HOST=雲端Host網址
 DB_USER=admin
-DB_PASSWORD=群組內傳的真實密碼
+DB_PASSWORD=群組內發放之密碼
 ```
 ### 步驟 2：安裝後端依賴套件
 切換至 backend/ 資料夾，執行以下指令安裝核心套件（包含資料庫連線與 Bcrypt 加密）：
@@ -48,3 +48,4 @@ pip install -r requirements.txt
 ```text
 python init_db.py
 ```
+### 完成!可以準備一杯咖啡，開始肝這個專案了:)
