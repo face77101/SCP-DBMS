@@ -1,0 +1,46 @@
+-- Site (收容措施) 實體表
+CREATE TABLE Site (
+    siteID VARCHAR(5) NOT NULL COMMENT '樓層分區編號',
+    site_status BOOLEAN DEFAULT FALSE COMMENT '使用狀態',
+    door_status BOOLEAN DEFAULT FALSE COMMENT '門禁狀態',
+    structure VARCHAR(12) NOT NULL COMMENT '結構完整度',
+    PRIMARY KEY (siteID),
+    CONSTRAINT chk_site_structure CHECK (structure IN ('Functional 正常', 'Broken 已損壞'))  --只能是正常 或損壞
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Report (研究報告) 實體表
+CREATE TABLE Report (
+    reportID DATETIME NOT NULL COMMENT '事件編號', 
+    required_lv CHAR(1) DEFAULT '1' COMMENT '查閱所需安保等級', 
+    title VARCHAR(100) NOT NULL COMMENT '報告標題', 
+    appearance TEXT COMMENT '外型描述', 
+    abilities TEXT COMMENT '特殊能力', 
+    weakness TEXT COMMENT '弱點', 
+    others TEXT COMMENT '其他', 
+    scpID VARCHAR(5) NOT NULL COMMENT 'SCP編號',  -- 待確認 involved_scp 為1對多關係無額外欄位直接將scpID合併到Report表中
+    PRIMARY KEY (reportID),
+    CONSTRAINT chk_report_lv CHECK (required_lv IN ('1', '2', '3')), --安保許可等級1 2 3 預設1
+    FOREIGN KEY (scpID) REFERENCES SCP(scpID) ON UPDATE CASCADE ON DELETE CASCADE --scpID 必然存在於SCP表中 跟隨更新或刪除
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--------------------------------
+
+-- research_leader (研究關係表) 
+CREATE TABLE research_leader (
+    reportID DATETIME NOT NULL COMMENT '事件編號', 
+    memID VARCHAR(10) NOT NULL COMMENT '成員代號', --待確認
+    role VARCHAR(20) NOT NULL COMMENT '身分角色', --待確認
+    PRIMARY KEY (reportID, memID),
+    CONSTRAINT chk_member_role CHECK (role IN ('leader', 'involved_member')), --成員所扮演角色 負責人或涉及成員
+    FOREIGN KEY (reportID) REFERENCES Report(reportID) ON UPDATE CASCADE ON DELETE CASCADE, --ReportID 必然存在於Report表中 跟隨更新或刪除
+    FOREIGN KEY (memID) REFERENCES Member(memID) ON UPDATE CASCADE ON DELETE RESTRICT --memID 必然存在於Member表中 跟隨更新 限制刪除 待確認
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- contained_in (收容關係表) 
+CREATE TABLE contained_in (
+    scpID VARCHAR(5) NOT NULL COMMENT 'SCP編號', 
+    siteID VARCHAR(5) NOT NULL COMMENT '樓層分區編號', 
+    PRIMARY KEY (scpID),
+    FOREIGN KEY (scpID) REFERENCES SCP(scpID) ON UPDATE CASCADE ON DELETE CASCADE, --scpID 必然存在於SCP表中 跟隨更新或刪除
+    FOREIGN KEY (siteID) REFERENCES Site(siteID) ON UPDATE CASCADE ON DELETE RESTRICT  --siteID 必然存在於Site表中 跟隨更新 待確認
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
