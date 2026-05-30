@@ -1,3 +1,43 @@
+-- 基金會成員資料
+create table if not exists Member (
+    memID VARCHAR(10) COMMENT '成員代號',
+    dept_name VARCHAR(50) NOT NULL COMMENT '所屬部門',
+    clearance_lv CHAR(1) DEFAULT '0' COMMENT '安保等級',
+    permission CHAR(1) DEFAULT 'D' COMMENT '人員編級',
+    mem_status VARCHAR(20) DEFAULT 'normal' COMMENT '精神狀態',
+    password_hash VARCHAR(255) NOT NULL COMMENT '加密後的登入密碼',
+    PRIMARY KEY (memID),
+    CONSTRAINT chk_mem_clealv_format check (clearance_lv in ('0', '1', '2', '3')),
+    CONSTRAINT chk_mem_perm_format check (permission in ('D', 'C', 'B', 'A')),
+    CONSTRAINT chk_mem_status_format check (mem_status in('normal', 'abnormal', 'treating'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- SCP資料
+create table if not exists SCP (
+    scpID VARCHAR(5) COMMENT 'SCP代號',
+    scp_status VARCHAR(20) COMMENT 'SCP的當前狀態',
+    threat_level VARCHAR(10) COMMENT '威脅等級',
+    appearance TEXT COMMENT '外型描述', 
+    abilities TEXT COMMENT '特殊能力', 
+    weakness TEXT COMMENT '弱點', 
+    others TEXT COMMENT '其他', 
+    PRIMARY KEY (scpID),
+    CONSTRAINT chk_scp_status_format check (scp_status in ('contained', 'free', 'breached', 'uncontained')),
+    CONSTRAINT chk_scp_threat_format check (threat_level in ('Safe', 'Euclid', 'Keter'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 任務資料
+create table if not exists Mission (
+    misID VARCHAR(10) COMMENT '任務代號',
+    mis_status VARCHAR(20) COMMENT '任務狀態',
+    memID VARCHAR(10) COMMENT '成員代號',
+    scpID VARCHAR(5) COMMENT 'SCP代號',
+    PRIMARY KEY (misID),
+    FOREIGN KEY (memID) REFERENCES Member (memID) ON DELETE RESTRICT,
+    FOREIGN KEY (scpID) REFERENCES SCP (scpID) ON DELETE RESTRICT,
+    CONSTRAINT chk_mis_status_format check (mis_status in ('processing', 'completed', 'failed'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Site (收容措施) 實體表
 CREATE TABLE Site (
     siteID VARCHAR(5) NOT NULL COMMENT '樓層分區編號',
