@@ -1,3 +1,7 @@
+-- ========
+-- DDL
+-- ========
+
 -- 基金會成員資料
 create table if not exists Member (
     memID VARCHAR(10) COMMENT '成員代號',
@@ -84,3 +88,17 @@ CREATE TABLE contained_in (
     FOREIGN KEY (scpID) REFERENCES SCP(scpID) ON UPDATE CASCADE ON DELETE CASCADE, --scpID 必然存在於SCP表中 跟隨更新或刪除
     FOREIGN KEY (siteID) REFERENCES Site(siteID) ON UPDATE CASCADE ON DELETE RESTRICT  --siteID 必然存在於Site表中 跟隨更新 待確認
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ========
+-- Trigger
+-- ========
+delimiter //
+create Trigger update_scp_status
+AFTER update on Site for each row
+BEGIN
+    if new.door_status = TRUE and new.structure = 'Broken' then
+        update scp set scp_status = 'breached'
+        where scpID in (select scpID from contained_in where siteID = new.siteID);
+    end if;
+END //
+delimiter ;
