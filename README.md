@@ -39,7 +39,7 @@ USERNAME=team07
 PASSWORD=moodle之前發的小組密碼
 DBNAME=team07
 ```
-> 另外，我已經將`config.env`列入 `.gitignore` 阻擋名單了，請放心。 
+ 另外，我已經將`config.env`列入 `.gitignore` 阻擋名單了，請放心。 
 
 #### 步驟 2：一鍵啟動 Docker 虛擬貨櫃集群
 確保你的電腦已經下載並啟動了 **Docker Desktop**。
@@ -58,8 +58,10 @@ docker-compose up
 按下 Enter 後，Docker 會自動去商店抓取 Linux 版的 Nginx 與 Python 3.10 環境，並自動裝妥 `requirements.txt` 的所有套件。當字停下來後，請打開瀏覽器驗證：
 
 * 📥 **前端大廳門衛**：瀏覽網址 `http://localhost` ──> 看到網頁畫面（代表 Nginx 成功站崗）。
+
   *目前只有施工中的訊息，還有 testing testing 123~*
 * 🧪 **後端邏輯核心**：瀏覽網址 `http://127.0.0.1:5000` ──> 看到 Flask 成功回應。
+
   *確保有"恭喜你測試成功！"等字樣*
 
 至此，環境建置完全結束！只要你修改 `backend/` 或 `frontend/` 裡的任何程式碼並儲存，Docker 內部都會透過虛擬傳送門（Volume）即時同步，網頁重新整理即可看到結果。
