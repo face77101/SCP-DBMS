@@ -43,7 +43,7 @@ create table if not exists Mission (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Site (收容措施) 實體表
-CREATE TABLE Site (
+CREATE TABLE if not exists Site (
     siteID VARCHAR(5) NOT NULL COMMENT '樓層分區編號',
     site_status BOOLEAN DEFAULT FALSE COMMENT '使用狀態',
     door_status BOOLEAN DEFAULT FALSE COMMENT '門禁狀態',
@@ -53,7 +53,7 @@ CREATE TABLE Site (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Report (研究報告) 實體表
-CREATE TABLE Report (
+CREATE TABLE if not exists Report (
     reportID DATETIME NOT NULL COMMENT '事件編號', 
     required_lv CHAR(1) DEFAULT '1' COMMENT '查閱所需安保等級', 
     title VARCHAR(100) NOT NULL COMMENT '報告標題', 
@@ -70,7 +70,7 @@ CREATE TABLE Report (
 --------------------------------
 
 -- research_leader (研究關係表) 
-CREATE TABLE research_leader (
+CREATE TABLE if not exists research_leader (
     reportID DATETIME NOT NULL COMMENT '事件編號', 
     memID VARCHAR(10) NOT NULL COMMENT '成員代號', --待確認
     role VARCHAR(20) NOT NULL COMMENT '身分角色', --待確認
@@ -81,7 +81,7 @@ CREATE TABLE research_leader (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- contained_in (收容關係表) 
-CREATE TABLE contained_in (
+CREATE TABLE if not exists contained_in (
     scpID VARCHAR(5) NOT NULL COMMENT 'SCP編號', 
     siteID VARCHAR(5) NOT NULL COMMENT '樓層分區編號', 
     PRIMARY KEY (scpID),
