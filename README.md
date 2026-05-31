@@ -39,6 +39,7 @@ SERVERNAME=學校遠端伺服器IP
 USERNAME=team07
 PASSWORD=moodle之前發的小組密碼
 DBNAME=team07
+EXTERNAL_API_KEY=群組內發放密鑰
 ```
  另外，我已經將`config.env`列入 `.gitignore` 阻擋名單了，請放心。 
 
