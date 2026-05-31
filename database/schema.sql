@@ -13,7 +13,7 @@ create table if not exists Member (
     PRIMARY KEY (memID),
     CONSTRAINT chk_mem_clealv_format check (clearance_lv in ('0', '1', '2', '3')),
     CONSTRAINT chk_mem_perm_format check (permission in ('D', 'C', 'B', 'A')),
-    CONSTRAINT chk_mem_status_format check (mem_status in('normal', 'abnormal', 'treating'))
+    CONSTRAINT chk_mem_status_format check (mem_status in('normal', 'abnormal', 'treating','dead')) --新增dead
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- SCP資料
@@ -21,11 +21,13 @@ create table if not exists SCP (
     scpID VARCHAR(5) COMMENT 'SCP代號',
     scp_status VARCHAR(20) COMMENT 'SCP的當前狀態',
     threat_level VARCHAR(10) COMMENT '威脅等級',
+    clearance_lv CHAR(1) DEFAULT '0' COMMENT '安保等級', --新增安保等級
     appearance TEXT COMMENT '外型描述', 
     abilities TEXT COMMENT '特殊能力', 
     weakness TEXT COMMENT '弱點', 
     others TEXT COMMENT '其他', 
     PRIMARY KEY (scpID),
+    CONSTRAINT chk_scp_clealv_format check (clearance_lv in ('0', '1', '2', '3')), --新增安保等級
     CONSTRAINT chk_scp_status_format check (scp_status in ('contained', 'free', 'breached', 'uncontained')),
     CONSTRAINT chk_scp_threat_format check (threat_level in ('Safe', 'Euclid', 'Keter'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -49,22 +51,20 @@ CREATE TABLE if not exists Site (
     door_status BOOLEAN DEFAULT FALSE COMMENT '門禁狀態',
     structure VARCHAR(12) NOT NULL COMMENT '結構完整度',
     PRIMARY KEY (siteID),
-    CONSTRAINT chk_site_structure CHECK (structure IN ('Functional 正常', 'Broken 已損壞'))  --只能是正常 或損壞
+    CONSTRAINT chk_site_structure CHECK (structure IN ('Functional', 'Broken')) 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Report (研究報告) 實體表
 CREATE TABLE if not exists Report (
-    reportID DATETIME NOT NULL COMMENT '事件編號', 
-    required_lv CHAR(1) DEFAULT '1' COMMENT '查閱所需安保等級', 
+    reportID DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '事件編號', 
     title VARCHAR(100) NOT NULL COMMENT '報告標題', 
     appearance TEXT COMMENT '外型描述', 
     abilities TEXT COMMENT '特殊能力', 
     weakness TEXT COMMENT '弱點', 
     others TEXT COMMENT '其他', 
-    scpID VARCHAR(5) NOT NULL COMMENT 'SCP編號',  -- 待確認 involved_scp 為1對多關係無額外欄位直接將scpID合併到Report表中
+    scpID VARCHAR(5) NOT NULL COMMENT 'SCP代號', 
     PRIMARY KEY (reportID),
-    CONSTRAINT chk_report_lv CHECK (required_lv IN ('1', '2', '3')), --安保許可等級1 2 3 預設1
-    FOREIGN KEY (scpID) REFERENCES SCP(scpID) ON UPDATE CASCADE ON DELETE CASCADE --scpID 必然存在於SCP表中 跟隨更新或刪除
+    FOREIGN KEY (scpID) REFERENCES SCP(scpID) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --------------------------------
@@ -72,21 +72,21 @@ CREATE TABLE if not exists Report (
 -- research_leader (研究關係表) 
 CREATE TABLE if not exists research_leader (
     reportID DATETIME NOT NULL COMMENT '事件編號', 
-    memID VARCHAR(10) NOT NULL COMMENT '成員代號', --待確認
-    role VARCHAR(20) NOT NULL COMMENT '身分角色', --待確認
+    memID VARCHAR(10) NOT NULL COMMENT '成員代號', 
+    role VARCHAR(20) NOT NULL COMMENT '身分角色', 
     PRIMARY KEY (reportID, memID),
-    CONSTRAINT chk_member_role CHECK (role IN ('leader', 'involved_member')), --成員所扮演角色 負責人或涉及成員
-    FOREIGN KEY (reportID) REFERENCES Report(reportID) ON UPDATE CASCADE ON DELETE CASCADE, --ReportID 必然存在於Report表中 跟隨更新或刪除
-    FOREIGN KEY (memID) REFERENCES Member(memID) ON UPDATE CASCADE ON DELETE RESTRICT --memID 必然存在於Member表中 跟隨更新 限制刪除 待確認
+    CONSTRAINT chk_member_role CHECK (role IN ('leader', 'involved_member')), --成員所扮演角色 負責人或涉及成員 負責人一位待確認?
+    FOREIGN KEY (reportID) REFERENCES Report(reportID) ON DELETE RESTRICT, 
+    FOREIGN KEY (memID) REFERENCES Member(memID) ON DELETE RESTRICT 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- contained_in (收容關係表) 
 CREATE TABLE if not exists contained_in (
-    scpID VARCHAR(5) NOT NULL COMMENT 'SCP編號', 
+    scpID VARCHAR(5) NOT NULL COMMENT 'SCP代號', 
     siteID VARCHAR(5) NOT NULL COMMENT '樓層分區編號', 
     PRIMARY KEY (scpID),
-    FOREIGN KEY (scpID) REFERENCES SCP(scpID) ON UPDATE CASCADE ON DELETE CASCADE, --scpID 必然存在於SCP表中 跟隨更新或刪除
-    FOREIGN KEY (siteID) REFERENCES Site(siteID) ON UPDATE CASCADE ON DELETE RESTRICT  --siteID 必然存在於Site表中 跟隨更新 待確認
+    FOREIGN KEY (scpID) REFERENCES SCP(scpID) ON DELETE RESTRICT, 
+    FOREIGN KEY (siteID) REFERENCES Site(siteID) ON DELETE RESTRICT  
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========
@@ -100,5 +100,22 @@ BEGIN
         update scp set scp_status = 'breached'
         where scpID in (select scpID from contained_in where siteID = new.siteID);
     end if;
+END //
+
+CREATE TRIGGER check_member_alive
+BEFORE INSERT ON research_leader
+FOR EACH ROW
+BEGIN
+    IF (SELECT mem_status FROM Member WHERE memID = NEW.memID) = 'dead' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot assign a deceased member';
+    END IF;
+
+    -- 限制一位負責人：如果新塞入的資料是 leader，去檢查該報告是否已經有負責人 待確認
+    IF NEW.role = 'leader' AND (SELECT COUNT(*) FROM research_leader WHERE reportID = NEW.reportID AND role = 'leader') > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'leader already exists';
+    END IF;
+
 END //
 delimiter ;
