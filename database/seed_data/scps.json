@@ -1,0 +1,502 @@
+[
+  {
+    "scpID": "SCP-001",
+    "scp_status": "uncontained",
+    "threat_level": "Safe",
+    "clearance_lv": "0",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-002",
+    "scp_status": "uncontained",
+    "threat_level": "Keter",
+    "clearance_lv": "1",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": "已有██名研究員在接觸過程中死亡"
+  },
+  {
+    "scpID": "SCP-003",
+    "scp_status": "breached",
+    "threat_level": "Keter",
+    "clearance_lv": "1",
+    "appearance": null,
+    "abilities": "可以模仿任何生物的外型，但氣味無法改變",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-004",
+    "scp_status": "breached",
+    "threat_level": "Euclid",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": "會分泌強酸性液體，能溶解大多數金屬",
+    "weakness": "對強光有極度敏感反應，會立即停止行動",
+    "others": null
+  },
+  {
+    "scpID": "SCP-005",
+    "scp_status": "free",
+    "threat_level": "Euclid",
+    "clearance_lv": "1",
+    "appearance": null,
+    "abilities": "可以模仿任何生物的外型，但氣味無法改變",
+    "weakness": "暴露於電磁脈衝後會短暫失去意識",
+    "others": null
+  },
+  {
+    "scpID": "SCP-006",
+    "scp_status": "free",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": "可以模仿任何生物的外型，但氣味無法改變",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-007",
+    "scp_status": "contained",
+    "threat_level": "Euclid",
+    "clearance_lv": "0",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-008",
+    "scp_status": "contained",
+    "threat_level": "Safe",
+    "clearance_lv": "3",
+    "appearance": "外觀為一面普通鏡子，鑲有木製框架",
+    "abilities": "可以模仿任何生物的外型，但氣味無法改變",
+    "weakness": null,
+    "others": "在收容期間曾嘗試與研究員進行溝通"
+  },
+  {
+    "scpID": "SCP-009",
+    "scp_status": "uncontained",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": "可以模仿任何生物的外型，但氣味無法改變",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-010",
+    "scp_status": "free",
+    "threat_level": "Keter",
+    "clearance_lv": "1",
+    "appearance": "外型為普通小學生，約10歲，穿著校服",
+    "abilities": null,
+    "weakness": "無法在攝氏零度以下的環境中維持活性",
+    "others": "目前收容費用每月約█████美元"
+  },
+  {
+    "scpID": "SCP-011",
+    "scp_status": "free",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": "會分泌強酸性液體，能溶解大多數金屬",
+    "weakness": "在三人以上同時觀察時會停止所有異常行為",
+    "others": null
+  },
+  {
+    "scpID": "SCP-012",
+    "scp_status": "breached",
+    "threat_level": "Keter",
+    "clearance_lv": "2",
+    "appearance": "外型為半透明人形，身高約2公尺，無明顯五官",
+    "abilities": null,
+    "weakness": "暴露於電磁脈衝後會短暫失去意識",
+    "others": null
+  },
+  {
+    "scpID": "SCP-013",
+    "scp_status": "breached",
+    "threat_level": "Safe",
+    "clearance_lv": "3",
+    "appearance": null,
+    "abilities": "可以穿越任何固體牆壁，但無法穿越玻璃",
+    "weakness": "無法辨識穿著紅色服裝的人員",
+    "others": null
+  },
+  {
+    "scpID": "SCP-014",
+    "scp_status": "free",
+    "threat_level": "Keter",
+    "clearance_lv": "0",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-015",
+    "scp_status": "free",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": "看似普通老人，穿著灰色西裝，頭髮全白",
+    "abilities": null,
+    "weakness": "無法在攝氏零度以下的環境中維持活性",
+    "others": "定期需要提供特定食物，否則會進入攻擊狀態"
+  },
+  {
+    "scpID": "SCP-016",
+    "scp_status": "free",
+    "threat_level": "Safe",
+    "clearance_lv": "0",
+    "appearance": "外型為普通小學生，約10歲，穿著校服",
+    "abilities": "可以穿越任何固體牆壁，但無法穿越玻璃",
+    "weakness": "無法在攝氏零度以下的環境中維持活性",
+    "others": null
+  },
+  {
+    "scpID": "SCP-017",
+    "scp_status": "contained",
+    "threat_level": "Euclid",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-018",
+    "scp_status": "uncontained",
+    "threat_level": "Safe",
+    "clearance_lv": "1",
+    "appearance": "外型為普通小學生，約10歲，穿著校服",
+    "abilities": "能夠暫時停止周圍10公尺內的時間流動",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-019",
+    "scp_status": "uncontained",
+    "threat_level": "Euclid",
+    "clearance_lv": "1",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-020",
+    "scp_status": "uncontained",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": "能夠使接觸者遺忘過去24小時的記憶",
+    "weakness": null,
+    "others": "目前已知有三個個體存在"
+  },
+  {
+    "scpID": "SCP-021",
+    "scp_status": "free",
+    "threat_level": "Euclid",
+    "clearance_lv": "0",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-022",
+    "scp_status": "contained",
+    "threat_level": "Euclid",
+    "clearance_lv": "1",
+    "appearance": null,
+    "abilities": "可以模仿任何生物的外型，但氣味無法改變",
+    "weakness": "對強光有極度敏感反應，會立即停止行動",
+    "others": "已有██名研究員在接觸過程中死亡"
+  },
+  {
+    "scpID": "SCP-023",
+    "scp_status": "contained",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-024",
+    "scp_status": "free",
+    "threat_level": "Keter",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": null,
+    "weakness": "對特定化學物質（██████）產生強烈過敏反應",
+    "others": null
+  },
+  {
+    "scpID": "SCP-025",
+    "scp_status": "free",
+    "threat_level": "Safe",
+    "clearance_lv": "1",
+    "appearance": "無固定形態，通常呈現黑色霧狀",
+    "abilities": "會對觀察者產生強烈的睡意，超過10分鐘目視會昏迷",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-026",
+    "scp_status": "uncontained",
+    "threat_level": "Euclid",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-027",
+    "scp_status": "free",
+    "threat_level": "Euclid",
+    "clearance_lv": "3",
+    "appearance": "外型為普通小學生，約10歲，穿著校服",
+    "abilities": "能夠暫時停止周圍10公尺內的時間流動",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-028",
+    "scp_status": "contained",
+    "threat_level": "Keter",
+    "clearance_lv": "3",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": "起源不明，推測與某古文明儀式有關"
+  },
+  {
+    "scpID": "SCP-029",
+    "scp_status": "uncontained",
+    "threat_level": "Euclid",
+    "clearance_lv": "0",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": "定期需要提供特定食物，否則會進入攻擊狀態"
+  },
+  {
+    "scpID": "SCP-030",
+    "scp_status": "free",
+    "threat_level": "Keter",
+    "clearance_lv": "3",
+    "appearance": "外型為半透明人形，身高約2公尺，無明顯五官",
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-031",
+    "scp_status": "breached",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-032",
+    "scp_status": "uncontained",
+    "threat_level": "Keter",
+    "clearance_lv": "0",
+    "appearance": null,
+    "abilities": "持續發出次聲波，長期暴露會導致精神崩潰",
+    "weakness": null,
+    "others": "定期需要提供特定食物，否則會進入攻擊狀態"
+  },
+  {
+    "scpID": "SCP-033",
+    "scp_status": "contained",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": "觸碰後會使物體緩慢腐化，效果在72小時後停止",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-034",
+    "scp_status": "contained",
+    "threat_level": "Keter",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": "在收容期間曾嘗試與研究員進行溝通"
+  },
+  {
+    "scpID": "SCP-035",
+    "scp_status": "free",
+    "threat_level": "Safe",
+    "clearance_lv": "0",
+    "appearance": null,
+    "abilities": "可以模仿任何生物的外型，但氣味無法改變",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-036",
+    "scp_status": "uncontained",
+    "threat_level": "Euclid",
+    "clearance_lv": "0",
+    "appearance": "外觀為一面普通鏡子，鑲有木製框架",
+    "abilities": null,
+    "weakness": "在三人以上同時觀察時會停止所有異常行為",
+    "others": null
+  },
+  {
+    "scpID": "SCP-037",
+    "scp_status": "contained",
+    "threat_level": "Keter",
+    "clearance_lv": "0",
+    "appearance": "體型巨大的類章魚生物，觸手數量不定",
+    "abilities": "觸碰後會使物體緩慢腐化，效果在72小時後停止",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-038",
+    "scp_status": "contained",
+    "threat_level": "Safe",
+    "clearance_lv": "3",
+    "appearance": null,
+    "abilities": "能複製任何人的聲音，並誘導其前往隔離區域",
+    "weakness": null,
+    "others": "起源不明，推測與某古文明儀式有關"
+  },
+  {
+    "scpID": "SCP-039",
+    "scp_status": "breached",
+    "threat_level": "Safe",
+    "clearance_lv": "3",
+    "appearance": null,
+    "abilities": "可以模仿任何生物的外型，但氣味無法改變",
+    "weakness": "對特定化學物質（██████）產生強烈過敏反應",
+    "others": "目前收容費用每月約█████美元"
+  },
+  {
+    "scpID": "SCP-040",
+    "scp_status": "free",
+    "threat_level": "Safe",
+    "clearance_lv": "3",
+    "appearance": null,
+    "abilities": null,
+    "weakness": "對強光有極度敏感反應，會立即停止行動",
+    "others": "已有██名研究員在接觸過程中死亡"
+  },
+  {
+    "scpID": "SCP-041",
+    "scp_status": "free",
+    "threat_level": "Safe",
+    "clearance_lv": "1",
+    "appearance": null,
+    "abilities": "觸碰後會使物體緩慢腐化，效果在72小時後停止",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-042",
+    "scp_status": "contained",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": "在收容期間曾嘗試與研究員進行溝通"
+  },
+  {
+    "scpID": "SCP-043",
+    "scp_status": "contained",
+    "threat_level": "Safe",
+    "clearance_lv": "1",
+    "appearance": null,
+    "abilities": "能複製任何人的聲音，並誘導其前往隔離區域",
+    "weakness": null,
+    "others": "每逢滿月其異常能力會增強三倍"
+  },
+  {
+    "scpID": "SCP-044",
+    "scp_status": "uncontained",
+    "threat_level": "Keter",
+    "clearance_lv": "0",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": "首次發現於████年，由特工██████回報"
+  },
+  {
+    "scpID": "SCP-045",
+    "scp_status": "free",
+    "threat_level": "Keter",
+    "clearance_lv": "1",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-046",
+    "scp_status": "uncontained",
+    "threat_level": "Euclid",
+    "clearance_lv": "3",
+    "appearance": null,
+    "abilities": null,
+    "weakness": "暴露於電磁脈衝後會短暫失去意識",
+    "others": null
+  },
+  {
+    "scpID": "SCP-047",
+    "scp_status": "free",
+    "threat_level": "Euclid",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-048",
+    "scp_status": "breached",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": "可以讀取他人思想，並在夢境中植入影像",
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-049",
+    "scp_status": "contained",
+    "threat_level": "Keter",
+    "clearance_lv": "3",
+    "appearance": "看似普通老人，穿著灰色西裝，頭髮全白",
+    "abilities": null,
+    "weakness": null,
+    "others": null
+  },
+  {
+    "scpID": "SCP-050",
+    "scp_status": "uncontained",
+    "threat_level": "Safe",
+    "clearance_lv": "2",
+    "appearance": null,
+    "abilities": "能夠暫時停止周圍10公尺內的時間流動",
+    "weakness": null,
+    "others": null
+  }
+]
