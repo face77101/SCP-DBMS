@@ -36,8 +36,8 @@ create table if not exists SCP (
 create table if not exists Mission (
     misID VARCHAR(10) COMMENT '任務代號',
     mis_status VARCHAR(20) COMMENT '任務狀態',
-    memID VARCHAR(10) COMMENT '成員代號',
-    scpID VARCHAR(5) COMMENT 'SCP代號',
+    memID VARCHAR(10) not null COMMENT '成員代號',
+    scpID VARCHAR(5) not null COMMENT 'SCP代號',
     PRIMARY KEY (misID),
     FOREIGN KEY (memID) REFERENCES Member (memID) ON DELETE RESTRICT,
     FOREIGN KEY (scpID) REFERENCES SCP (scpID) ON DELETE RESTRICT,
@@ -69,8 +69,8 @@ CREATE TABLE if not exists Report (
 
 --------------------------------
 
--- research_leader (研究關係表) 
-CREATE TABLE if not exists research_leader (
+-- involved_mem (研究關係表) 
+CREATE TABLE if not exists involved_mem (
     reportID DATETIME NOT NULL COMMENT '事件編號', 
     memID VARCHAR(10) NOT NULL COMMENT '成員代號', 
     role VARCHAR(20) NOT NULL COMMENT '身分角色', 
@@ -93,27 +93,29 @@ CREATE TABLE if not exists contained_in (
 -- Trigger
 -- ========
 delimiter //
+--  Site 出問題，被關起來的 SCP 會變成逃脫
 create Trigger update_scp_status
 AFTER update on Site for each row
 BEGIN
     if new.door_status = TRUE and new.structure = 'Broken' then
         update scp set scp_status = 'breached'
         where scpID in (select scpID from contained_in where siteID = new.siteID);
-        delete from contained_in where siteID = new.siteID; -- 已經逃脫，不再被收容
+        delete from contained_in where siteID = new.siteID;
     end if;
 END //
 
 CREATE TRIGGER check_member_alive
-BEFORE INSERT ON research_leader
+BEFORE INSERT ON involved_mem
 FOR EACH ROW
 BEGIN
+    -- 死人不可能再參與報告
     IF (SELECT mem_status FROM Member WHERE memID = NEW.memID) = 'dead' THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot assign a deceased member';
     END IF;
 
     -- 限制一位負責人：如果新塞入的資料是 leader，去檢查該報告是否已經有負責人 待確認
-    IF NEW.role = 'leader' AND (SELECT COUNT(*) FROM research_leader WHERE reportID = NEW.reportID AND role = 'leader') > 0 THEN
+    IF NEW.role = 'leader' AND (SELECT COUNT(*) FROM involved_mem WHERE reportID = NEW.reportID AND role = 'leader') > 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'leader already exists';
     END IF;
