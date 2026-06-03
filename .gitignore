@@ -1,0 +1,10 @@
+# 忽略 Docker 的環境變數機密檔
+config.env
+
+# 如果有寫其他的環境變數檔也一併忽略
+.env
+*.env
+
+# 忽略 Python 產生的快取資料夾
+__pycache__/
+*.pyc

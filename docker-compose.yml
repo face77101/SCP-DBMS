@@ -1,0 +1,73 @@
+services:
+  # =========================================================================
+  # 服務一：【後端貨櫃】負責跑 Python API、連線學校 MySQL、處理登入邏輯
+  # =========================================================================
+  backend:
+    # 這裡告訴 Docker：「請根據這個資料夾底下的 Dockerfile.txt，現場幫我打造一個有 Python 的環境」
+    build:
+      context: .
+      dockerfile: Dockerfile.txt
+    
+    # 給這個貨櫃取個好認的名字，以後在終端機看日誌時比較清楚
+    container_name: scp_backend_container
+    
+    # 【打通對外通道】格式為 "本機通道:貨櫃通道"
+    # 左邊的 5000：你在自己電腦瀏覽器或 Postman 測試時要打的 Port。你可以改成 5001 或 8000。
+    # 右邊的 5000：Python 程式在貨櫃裡預設佔用的 Port。通常不建議改。
+    ports:
+      - "5000:5000"
+    
+    # 【機密文件傳送門】
+    # 把本地的 config.env 餵給這個貨櫃。
+    # 這樣你的 Python 程式 (app.py) 就可以用 os.environ 抓到學校伺服器的密碼，
+    # 而不用把密碼寫死在程式碼裡，防止上傳 GitHub 時外洩。
+    env_file:
+      - config.env
+    
+    # 【程式碼即時同步】格式為 "本機資料夾:貨櫃內資料夾"
+    # 把你電腦裡的 backend 資料夾，與貨櫃內的 /app 資料夾綁定。
+    # 這樣只要你在本地存檔修改了 auth.py，貨櫃內的程式碼就會立刻跟著變，不用重新啟動 Docker！
+    volumes:
+      - ./backend:/app
+    
+    # 如果程式因為 Bug 閃退崩潰，Docker 會自動幫你把這個貨櫃重新啟動
+    restart: always
+    
+    # 告訴這個貨櫃：請加入我們專屬的基金會內部網路
+    networks:
+      - scp_foundation_network
+
+  # =========================================================================
+  # 服務二：【前端貨櫃】負責當大廳警衛，把網頁畫面傳給使用者的瀏覽器
+  # =========================================================================
+  frontend:
+    # 這裡告訴 Docker：「不用現場打造了，直接去雲端抓一個做好的輕量版 Nginx 伺服器來用」
+    image: nginx:alpine
+    
+    # 給這個貨櫃取個名字
+    container_name: scp_frontend_container
+    
+    # 【打通對外通道】
+    # 左邊的 80：你可以改成 8080 或 3000。如果保持 80，你在瀏覽器只要打 localhost 就好（不用加 :80）。
+    # 右邊的 80：Nginx 軟體規定預設收發傳單的專用 Port，強烈建議不要動。
+    # Port 80 是全世界通用的 HTTP（未加密網頁）標準通道
+    ports:
+      - "80:80"
+    
+    # 【網頁檔案交接處】
+    # 把你電腦裡的 frontend 資料夾，綁定到 Nginx 預設存放網頁的目錄 (/usr/share/nginx/html)。
+    # 這樣 Nginx 才知道要去哪裡拿你的 index.html、style.css 傳給使用者。
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    
+    restart: always
+    networks:
+      - scp_foundation_network
+
+# ===========================================================================
+# 網路設定：建立一條專屬的隱形電纜
+# ===========================================================================
+networks:
+  # 這個網路讓 frontend 跟 backend 這兩個貨櫃可以用名字互相溝通，而不必知道對方的 IP
+  scp_foundation_network:
+    driver: bridge

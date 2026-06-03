@@ -34,7 +34,7 @@ create table if not exists SCP (
 
 -- 任務資料
 create table if not exists Mission (
-    misID VARCHAR(10) COMMENT '任務代號',
+    misID VARCHAR(20) COMMENT '任務代號',
     mis_status VARCHAR(20) COMMENT '任務狀態',
     memID VARCHAR(10) not null COMMENT '成員代號',
     scpID VARCHAR(5) not null COMMENT 'SCP代號',
@@ -56,7 +56,8 @@ CREATE TABLE if not exists Site (
 
 -- Report (研究報告) 實體表
 CREATE TABLE if not exists Report (
-    reportID DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '事件編號', 
+    reportID DATETIME NOT NULL COMMENT '事件編號', 
+    required_lv CHAR(1) DEFAULT '1' COMMENT '查閱所需安保等級', 
     title VARCHAR(100) NOT NULL COMMENT '報告標題', 
     appearance TEXT COMMENT '外型描述', 
     abilities TEXT COMMENT '特殊能力', 
@@ -69,8 +70,8 @@ CREATE TABLE if not exists Report (
 
 --------------------------------
 
--- involved_mem (研究關係表) 
-CREATE TABLE if not exists involved_mem (
+-- research_leader (研究關係表) 
+CREATE TABLE if not exists research_leader (
     reportID DATETIME NOT NULL COMMENT '事件編號', 
     memID VARCHAR(10) NOT NULL COMMENT '成員代號', 
     role VARCHAR(20) NOT NULL COMMENT '身分角色', 
@@ -82,7 +83,7 @@ CREATE TABLE if not exists involved_mem (
 
 -- contained_in (收容關係表) 
 CREATE TABLE if not exists contained_in (
-    scpID VARCHAR(5) NOT NULL COMMENT 'SCP代號', 
+    scpID VARCHAR(5) NOT NULL COMMENT 'SCP編號', 
     siteID VARCHAR(5) NOT NULL COMMENT '樓層分區編號', 
     PRIMARY KEY (scpID),
     FOREIGN KEY (scpID) REFERENCES SCP(scpID) ON DELETE RESTRICT, 
@@ -102,23 +103,5 @@ BEGIN
         where scpID in (select scpID from contained_in where siteID = new.siteID);
         delete from contained_in where siteID = new.siteID;
     end if;
-END //
-
-CREATE TRIGGER check_member_alive
-BEFORE INSERT ON involved_mem
-FOR EACH ROW
-BEGIN
-    -- 死人不可能再參與報告
-    IF (SELECT mem_status FROM Member WHERE memID = NEW.memID) = 'dead' THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Cannot assign a deceased member';
-    END IF;
-
-    -- 限制一位負責人：如果新塞入的資料是 leader，去檢查該報告是否已經有負責人 待確認
-    IF NEW.role = 'leader' AND (SELECT COUNT(*) FROM involved_mem WHERE reportID = NEW.reportID AND role = 'leader') > 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'leader already exists';
-    END IF;
-
 END //
 delimiter ;
