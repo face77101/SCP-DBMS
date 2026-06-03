@@ -1,0 +1,20 @@
+[
+  {
+    "siteID": "1F-A",
+    "site_status": true,
+    "door_status":true,
+    "structure":"Functional"
+  },
+  {
+    "siteID": "1F-B",
+    "site_status": true,
+    "door_status":true,
+    "structure":"Broken"
+  },
+  {
+    "siteID": "1F-C",
+    "site_status": false,
+    "door_status": false,
+    "structure":"Functional"
+  }
+]

@@ -6,7 +6,7 @@ services:
     # 這裡告訴 Docker：「請根據這個資料夾底下的 Dockerfile.txt，現場幫我打造一個有 Python 的環境」
     build:
       context: .
-      dockerfile: Dockerfile.txt
+      dockerfile: Dockerfile
     
     # 給這個貨櫃取個好認的名字，以後在終端機看日誌時比較清楚
     container_name: scp_backend_container
@@ -29,6 +29,7 @@ services:
     # 這樣只要你在本地存檔修改了 auth.py，貨櫃內的程式碼就會立刻跟著變，不用重新啟動 Docker！
     volumes:
       - ./backend:/app
+      - ./database:/app/database
     
     # 如果程式因為 Bug 閃退崩潰，Docker 會自動幫你把這個貨櫃重新啟動
     restart: always
