@@ -12,7 +12,7 @@ create table if not exists Member (
     password_hash VARCHAR(255) NOT NULL COMMENT '加密後的登入密碼',
     PRIMARY KEY (memID),
     CONSTRAINT chk_mem_clealv_format check (clearance_lv in ('0', '1', '2', '3')),
-    CONSTRAINT chk_mem_perm_format check (permission in ('D', 'C', 'B', 'A','O5')), --待確認O5?
+    CONSTRAINT chk_mem_perm_format check (permission in ('D', 'C', 'B', 'A','O5')), 
     CONSTRAINT chk_mem_status_format check (mem_status in('normal', 'abnormal', 'treating','dead')) 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -41,7 +41,7 @@ create table if not exists Mission (
     PRIMARY KEY (misID),
     FOREIGN KEY (memID) REFERENCES Member (memID) ON DELETE RESTRICT,
     FOREIGN KEY (scpID) REFERENCES SCP (scpID) ON DELETE RESTRICT,
-    CONSTRAINT chk_mis_status_format check (mis_status in ('processing', 'completed', 'failed','pending')) --待確認Pending?
+    CONSTRAINT chk_mis_status_format check (mis_status in ('processing', 'completed', 'failed','pending')) 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Site (收容措施) 實體表
