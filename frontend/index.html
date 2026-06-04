@@ -1,2 +1,120 @@
-<h1>SCP foundation's front-end website is under construction....</h1>
-<h1>testing testing 123~@-@</h1>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>SCP report 上傳api 連線測試面板</title>
+    <style>
+        body { background-color: #1e1e1e; color: #ffffff; font-family: sans-serif; padding: 20px; }
+        .original-content { border-bottom: 2px dashed #555; padding-bottom: 20px; margin-bottom: 30px; }
+        .card { background-color: #2d2d2d; padding: 20px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #444; }
+        input, textarea, button { width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; box-sizing: border-box; }
+        input, textarea { background-color: #3d3d3d; color: #fff; }
+        button { background-color: #a30000; color: white; font-weight: bold; cursor: pointer; }
+        button:hover { background-color: #d60000; }
+        pre { background-color: #111; padding: 15px; border-radius: 4px; overflow-x: auto; color: #00ff00; }
+    </style>
+</head>
+<body>
+
+    <div class="original-content">
+        <h1>SCP foundation's front-end website is under construction....</h1>
+        <h1>testing testing 123~@-@</h1>
+    </div>
+
+    <h2>後端 report API 測試 </h2>
+    <p>測試流程：必須先執行第一步登入，取得 Session 通行證後，第二步才能成功寫入資料庫。</p>
+
+    <div class="card">
+        <h3>第一步：以資料庫既有特工身分登入</h3>
+        <p>請使用資料庫中已存在的特工帳號（Session 會自動紀錄此 ID）</p>
+        <input type="text" id="memID" placeholder="人員代號" value="RD0000010A">
+        <button onclick="mockLogin()">向後端發送登入請求 (綁定 Session)</button>
+    </div>
+
+    <div class="card">
+        <h3>第二步：測試研究報告上傳（自動綁定填表人為 Leader）</h3>
+        <input type="text" id="title" placeholder="TITLE: 報告標題 (必填)" value="Leo_report_test_api">
+        <input type="text" id="scpID" placeholder="SCPID: 必須是資料庫已存在的 SCP 代號 (必填)" value="SCP-001">
+        <textarea id="abilities" placeholder="ABL.: 特殊能力"></textarea>
+        <textarea id="weakness" placeholder="WEAK.: 弱點"></textarea>
+        <textarea id="appearance" placeholder="APP.: 外型描述"></textarea>
+        <textarea id="others" placeholder="OTHERS: 其他備註"></textarea>
+        
+        <p style="color: #aaa; margin-top: 15px;">填入「涉及成員 ID」（多個請用半形逗號隔開，可留空）：</p>
+        <input type="text" id="involvedMembers" placeholder="例如: RD0000010C, MG0000020C" value="RD0000010C">
+        
+        <button onclick="submitReport()">發送 POST 請求提交報告並寫入 MySQL</button>
+    </div>
+
+    <div class="card">
+        <h3>系統回傳結果 (Log)</h3>
+        <pre id="responseLog">等待測試操作...</pre>
+    </div>
+
+    <script>
+        // 1. 模擬登入：走 Nginx 預設大門 (Port 80)
+        function mockLogin() {
+            const memID = document.getElementById('memID').value;
+            log("正在嘗試登入特工: " + memID + " ...");
+            
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ memID: memID, password: "FAKE_PW_FOR_TEST" })
+            })
+            .then(res => res.json())
+            .then(data => {
+                log("【第一步回應】:\n" + JSON.stringify(data, null, 2));
+            })
+            .catch(err => {
+                log("登入失敗！原因 /api/login 路由目前可能還在施工中。\n\n💡 沒關係！請直接打開 backend/app.py 把「#session['memID'] = 'xxxxxxx'」那一行的井字號（#）刪掉存檔，當作臨時後門，然後直接去按第二步送出！");
+            });
+        }
+
+        // 2. 上傳報告：走 Nginx 預設大門 (Port 80)
+        function submitReport() {
+            // 解析涉及成員字串變成陣列
+            const membersStr = document.getElementById('involvedMembers').value;
+            const membersArray = membersStr ? membersStr.split(',').map(s => s.trim()) : [];
+
+            const reportData = {
+                title: document.getElementById('title').value,
+                scpID: document.getElementById('scpID').value,
+                abilities: document.getElementById('abilities').value,
+                weakness: document.getElementById('weakness').value,
+                appearance: document.getElementById('appearance').value,
+                others: document.getElementById('others').value,
+                involved_members: membersArray,
+                required_lv: "1"
+            };
+
+            log("正在發送報告資料至後端資料庫...");
+
+            fetch('/api/reports/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reportData)
+            })
+            .then(res => {
+                if(res.status === 401) {
+                    log("401 Unauthorized：拒絕寫入資料庫。\n原因：你目前沒有成功登入，Session 是空的，被安全防線攔截！");
+                    throw new Error("未登入");
+                }
+                return res.json();
+            })
+            .then(data => {
+                log("後端已成功放行並寫入資料庫！\n\n回傳回應:\n" + JSON.stringify(data, null, 2));
+            })
+            .catch(err => {
+                if(err.message !== "未登入") {
+                    log("發生資料庫寫入錯誤:\n" + err);
+                }
+            });
+        }
+
+        function log(msg) {
+            document.getElementById('responseLog').textContent = msg;
+        }
+    </script>
+</body>
+</html>
