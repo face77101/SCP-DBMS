@@ -29,7 +29,7 @@ def get_db_connection():
 # 測試首頁路由
 @app.route('/')
 def hello():
-    return "SCP 基金會後端伺服器已上線。恭喜你測試成功。恭喜你測試成功！這玩意是臨時的~哈~^Ｏ^"
+    return "SCP 基金會後端伺服器已上線。恭喜你測試成功。這玩意是臨時的~哈~^Ｏ^"
 
 # ==========================================
 # 工作 3-2 實作：API - 「研究報告上傳」
@@ -148,4 +148,4 @@ def upload_report():
             conn.close()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)#每次你改 Code，後端就會自動同步，不用手動重啟 Docker！
+    app.run(host='0.0.0.0', port=5000, debug=True) #每次你改 Code，後端就會自動同步，不用手動重啟 Docker！
