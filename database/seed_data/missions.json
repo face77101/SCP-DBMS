@@ -6,12 +6,6 @@
     "scpID":"SCP-007"
   },
   {
-    "misID": "26060309-MTG",
-    "mis_status": "pending",
-    "memID":"RD0000010B",
-    "scpID":null
-  },
-  {
     "misID": "26052912-RES",
     "mis_status": "completed",
     "memID":"RD0000010B",
