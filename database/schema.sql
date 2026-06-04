@@ -34,10 +34,10 @@ create table if not exists SCP (
 
 -- 任務資料
 create table if not exists Mission (
-    misID VARCHAR(20) COMMENT '任務代號',
+    misID INT AUTO_INCREMENT COMMENT '任務代號',
     mis_status VARCHAR(20) COMMENT '任務狀態',
     memID VARCHAR(10) not null COMMENT '成員代號',
-    scpID VARCHAR(5) COMMENT 'SCP代號',
+    scpID VARCHAR(10) not null COMMENT 'SCP代號',
     PRIMARY KEY (misID),
     FOREIGN KEY (memID) REFERENCES Member (memID) ON DELETE RESTRICT,
     FOREIGN KEY (scpID) REFERENCES SCP (scpID) ON DELETE RESTRICT,
@@ -63,15 +63,15 @@ CREATE TABLE if not exists Report (
     abilities TEXT COMMENT '特殊能力', 
     weakness TEXT COMMENT '弱點', 
     others TEXT COMMENT '其他', 
-    scpID VARCHAR(5) NOT NULL COMMENT 'SCP代號', 
+    scpID VARCHAR(10) NOT NULL COMMENT 'SCP代號', 
     PRIMARY KEY (reportID),
     FOREIGN KEY (scpID) REFERENCES SCP(scpID) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --------------------------------
 
--- research_leader (研究關係表) 
-CREATE TABLE if not exists research_leader (
+-- involved_mem (研究關係表) 
+CREATE TABLE if not exists involved_mem (
     reportID DATETIME NOT NULL COMMENT '事件編號', 
     memID VARCHAR(10) NOT NULL COMMENT '成員代號', 
     role VARCHAR(20) NOT NULL COMMENT '身分角色', 
