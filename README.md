@@ -53,7 +53,7 @@ docker-compose up --build
 ```
 💡首次配置完環境後，只要環境或所需套件沒有更新就**不用再重新build！** 日常開發輸入以下命令即可：
 ```bash
-docker-compose up
+docker-compose up -d
 ```
 #### 步驟 3：啟動成功的訊號
 按下 Enter 後，Docker 會自動去商店抓取 Linux 版的 Nginx 與 Python 3.10 環境，並自動裝妥 `requirements.txt` 的所有套件。當字停下來後，請打開瀏覽器驗證：

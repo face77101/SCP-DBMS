@@ -1,5 +1,6 @@
 # 忽略 Docker 的環境變數機密檔
 config.env
+database/seed_data/members.json
 
 # 如果有寫其他的環境變數檔也一併忽略
 .env
