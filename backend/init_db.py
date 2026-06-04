@@ -24,7 +24,7 @@ tables = [
     ('Site', 'sites.json'),
     ('Report', 'reports.json'),
     ('Mission', 'missions.json'),
-    ('research_leader', 'research_leader.json'),
+    ('involved_mem', 'involved_mem.json'),
     ('contained_in', 'contained_in.json')
 ]
 
