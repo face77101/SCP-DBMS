@@ -3,7 +3,7 @@
     "memID": "O5000001O5",
     "dept_name": "O5",
     "clearance_lv": 3,
-    "permission": "O5",
+    "permission": "A",
     "mem_status": "normal",
     "password_plain": "FAKE_PW_FOR_TEST"
   },

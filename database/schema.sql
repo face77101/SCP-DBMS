@@ -12,7 +12,7 @@ create table if not exists Member (
     password_hash VARCHAR(255) NOT NULL COMMENT '加密後的登入密碼',
     PRIMARY KEY (memID),
     CONSTRAINT chk_mem_clealv_format check (clearance_lv in ('0', '1', '2', '3')),
-    CONSTRAINT chk_mem_perm_format check (permission in ('D', 'C', 'B', 'A','O5')), 
+    CONSTRAINT chk_mem_perm_format check (permission in ('D', 'C', 'B', 'A')), 
     CONSTRAINT chk_mem_status_format check (mem_status in('normal', 'abnormal', 'treating','dead')) 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
