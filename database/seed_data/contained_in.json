@@ -1,10 +1,78 @@
 [
   {
+    "scpID": "SCP-004",
+    "siteID": "B2-A"
+  },
+  {
+    "scpID": "SCP-008",
+    "siteID": "B2-B"
+  },
+  {
+    "scpID": "SCP-012",
+    "siteID": "B1-A"
+  },
+  {
+    "scpID": "SCP-013",
+    "siteID": "B1-B"
+  },
+  {
+    "scpID": "SCP-023",
+    "siteID": "B1-C"
+  },
+  {
     "scpID": "SCP-007",
     "siteID": "1F-A"
   },
   {
-    "scpID": "SCP-003",
+    "scpID": "SCP-028",
     "siteID": "1F-B"
+  },
+  {
+    "scpID": "SCP-049",
+    "siteID": "1F-E"
+  },
+  {
+    "scpID": "SCP-017",
+    "siteID": "1F-H"
+  },
+  {
+    "scpID": "SCP-022",
+    "siteID": "1F-H"
+  },
+  {
+    "scpID": "SCP-048",
+    "siteID": "2F-A"
+  },
+  {
+    "scpID": "SCP-031",
+    "siteID": "2F-B"
+  },
+  {
+    "scpID": "SCP-033",
+    "siteID": "2F-C"
+  },
+  {
+    "scpID": "SCP-039",
+    "siteID": "3F-A"
+  },
+  {
+    "scpID": "SCP-037",
+    "siteID": "3F-B"
+  },
+  {
+    "scpID": "SCP-034",
+    "siteID": "4F-A"
+  },
+  {
+    "scpID": "SCP-042",
+    "siteID": "4F-B"
+  },
+  {
+    "scpID": "SCP-043",
+    "siteID": "5F-A"
+  },
+  {
+    "scpID": "SCP-038",
+    "siteID": "5F-A"
   }
 ]

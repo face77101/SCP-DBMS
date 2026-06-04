@@ -34,7 +34,7 @@ create table if not exists SCP (
 
 -- 任務資料
 create table if not exists Mission (
-    misID INT AUTO_INCREMENT COMMENT '任務代號',
+    misID VARCHAR(20) COMMENT '任務代號',
     mis_status VARCHAR(20) COMMENT '任務狀態',
     memID VARCHAR(10) not null COMMENT '成員代號',
     scpID VARCHAR(10) not null COMMENT 'SCP代號',
