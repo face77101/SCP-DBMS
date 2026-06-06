@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新增成員</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 2rem; }
+    h1 { font-size: 22px; font-weight: 500; margin-bottom: 1.5rem; }
+    .card { background: white; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; max-width: 480px; }
+    .field { margin-bottom: 1rem; }
+    label { display: block; font-size: 13px; color: #888; margin-bottom: 4px; }
+    input[type="text"], input[type="password"], select {
+      width: 100%; padding: 8px 12px; border: 1px solid #ddd;
+      border-radius: 8px; font-size: 14px; outline: none;
+    }
+    input:focus, select:focus { border-color: #aaa; }
+    .actions { display: flex; gap: 8px; margin-top: 1.5rem; }
+    button { padding: 8px 16px; border: 1px solid #ddd; border-radius: 8px; background: white; font-size: 13px; cursor: pointer; }
+    button:hover { background: #f0f0f0; }
+    button.primary { background: #1a1a1a; color: white; border-color: #1a1a1a; }
+    button.primary:hover { background: #333; }
+    .error { color: red; margin-top: 1rem; font-size: 13px; }
+    .success { color: green; margin-top: 1rem; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <h1>新增成員</h1>
+
+  <div class="card">
+    <div class="field">
+      <label>部門縮寫</label>
+      <input type="text" id="dept_name" placeholder="例如：RD" />
+    </div>
+    <div class="field">
+      <label>安保等級</label>
+      <select id="clearance_lv">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>人員編級</label>
+      <select id="permission">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>精神狀態</label>
+      <select id="mem_status">
+        <option value="normal">normal</option>
+        <option value="abnormal">abnormal</option>
+        <option value="treating">treating</option>
+        <option value="dead">dead</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>密碼</label>
+      <input type="password" id="password" placeholder="輸入密碼" />
+    </div>
+
+    <div class="actions">
+      <button onclick="location.href='/members'">取消</button>
+      <button class="primary" onclick="submitForm()">新增</button>
+    </div>
+
+    <p class="error" id="error-msg"></p>
+    <p class="success" id="success-msg"></p>
+  </div>
+
+  <script>
+    function submitForm() {
+      const dept_name    = document.getElementById('dept_name').value.trim()
+      const clearance_lv = document.getElementById('clearance_lv').value
+      const permission   = document.getElementById('permission').value
+      const mem_status   = document.getElementById('mem_status').value
+      const password     = document.getElementById('password').value
+
+      if (!dept_name || !password) {
+        document.getElementById('error-msg').textContent = '部門縮寫和密碼為必填'
+        return
+      }
+
+      fetch('/api/admin/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dept_name, clearance_lv, permission, mem_status, password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.message) {
+          document.getElementById('success-msg').textContent = '新增成功！成員代號：' + data.memID
+          document.getElementById('error-msg').textContent = ''
+        } else {
+          document.getElementById('error-msg').textContent = '新增失敗：' + data.error
+        }
+      })
+      .catch(err => {
+        document.getElementById('error-msg').textContent = '新增失敗：' + err
+      })
+    }
+  </script>
+
+</body>
+</html>
