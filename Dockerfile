@@ -33,6 +33,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 但為了讓這個 Dockerfile 可以獨立運作（例如未來要丟到真正的雲端伺服器上），
 # 我們還是會把 backend 資料夾裡的所有程式碼，完整複製進去微型電腦的 /app 裡面。
 COPY backend/ .
+COPY frontend/ /frontend/
 
 # =========================================================================
 # 第六步：宣告營業通道 (Expose Port)
