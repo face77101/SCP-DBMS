@@ -1,5 +1,41 @@
 [
   {
+    "siteID": "B2-A",
+    "site_status": true,
+    "door_status": true,
+    "structure": "Broken"
+  },
+  {
+    "siteID": "B2-B",
+    "site_status": true,
+    "door_status": false,
+    "structure": "Functional"
+  },
+  {
+    "siteID": "B2-C",
+    "site_status": false,
+    "door_status": true,
+    "structure": "Broken"
+  },
+  {
+    "siteID": "B1-A",
+    "site_status": true,
+    "door_status": true,
+    "structure": "Broken"
+  },
+  {
+    "siteID": "B1-B",
+    "site_status": true,
+    "door_status": true,
+    "structure": "Broken"
+  },
+  {
+    "siteID": "B1-C",
+    "site_status": true,
+    "door_status": false,
+    "structure": "Functional"
+  },
+  {
     "siteID": "1F-A",
     "site_status": true,
     "door_status":true,
@@ -9,12 +45,90 @@
     "siteID": "1F-B",
     "site_status": true,
     "door_status":true,
-    "structure":"Broken"
+    "structure":"Functional"
   },
   {
     "siteID": "1F-C",
     "site_status": false,
     "door_status": false,
     "structure":"Functional"
+  },
+  {
+    "siteID": "1F-E",
+    "site_status": true,
+    "door_status": true,
+    "structure": "Functional"
+  },
+  {
+    "siteID": "1F-H",
+    "site_status": true,
+    "door_status": false,
+    "structure": "Functional"
+  },
+  {
+    "siteID": "1F-J",
+    "site_status": false,
+    "door_status": false,
+    "structure": "Functional"
+  },
+  {
+    "siteID": "2F-A",
+    "site_status": true,
+    "door_status": true,
+    "structure": "Broken"
+  },
+  {
+    "siteID": "2F-B",
+    "site_status": true,
+    "door_status": true,
+    "structure": "Broken"
+  },
+  {
+    "siteID": "2F-C",
+    "site_status": true,
+    "door_status": false,
+    "structure": "Functional"
+  },
+  {
+    "siteID": "3F-A",
+    "site_status": true,
+    "door_status": true,
+    "structure": "Broken"
+  },
+  {
+    "siteID": "3F-B",
+    "site_status": true,
+    "door_status": false,
+    "structure": "Functional"
+  },
+  {
+    "siteID": "3F-C",
+    "site_status": false,
+    "door_status": true,
+    "structure": "Broken"
+  },
+  {
+    "siteID": "4F-A",
+    "site_status": true,
+    "door_status": false,
+    "structure": "Functional"
+  },
+  {
+    "siteID": "4F-B",
+    "site_status": true,
+    "door_status": false,
+    "structure": "Functional"
+  },
+  {
+    "siteID": "5F-A",
+    "site_status": true,
+    "door_status": false,
+    "structure": "Functional"
+  },
+  {
+    "siteID": "5F-B",
+    "site_status": false,
+    "door_status": false,
+    "structure": "Functional"
   }
 ]

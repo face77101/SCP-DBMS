@@ -13,7 +13,7 @@ create table if not exists Member (
     PRIMARY KEY (memID),
     CONSTRAINT chk_mem_clealv_format check (clearance_lv in ('0', '1', '2', '3')),
     CONSTRAINT chk_mem_perm_format check (permission in ('D', 'C', 'B', 'A')), 
-    CONSTRAINT chk_mem_status_format check (mem_status in('normal', 'abnormal', 'treating','dead')) 
+    CONSTRAINT chk_mem_status_format check (mem_status in('normal', 'abnormal', 'treating', 'dead', 'suspended')) 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- SCP資料
@@ -34,7 +34,7 @@ create table if not exists SCP (
 
 -- 任務資料
 create table if not exists Mission (
-    misID INT AUTO_INCREMENT COMMENT '任務代號',
+    misID VARCHAR(20) COMMENT '任務代號',
     mis_status VARCHAR(20) COMMENT '任務狀態',
     memID VARCHAR(10) not null COMMENT '成員代號',
     scpID VARCHAR(10) not null COMMENT 'SCP代號',
