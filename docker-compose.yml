@@ -30,6 +30,7 @@ services:
     volumes:
       - ./backend:/app
       - ./database:/app/database
+      - ./frontend:/app/frontend  # 👈 確保這行有寫！它把本地的 frontend 複製進容器的 /app/frontend
     
     # 如果程式因為 Bug 閃退崩潰，Docker 會自動幫你把這個貨櫃重新啟動
     restart: always

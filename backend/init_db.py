@@ -19,7 +19,7 @@ cursor = db.cursor()
 # 2. 定義資料表與對應的 JSON 檔名（順序依據外鍵依賴關係排列）
 # 這裡注意：你的第一個成員 JSON 檔名叫成員列表，所以我們直接用 'members.example.json'
 tables = [
-    ('Member', 'members.example.json'), 
+    ('Member', 'members.json'), 
     ('SCP', 'scps.json'),
     ('Site', 'sites.json'),
     ('Report', 'reports.json'),
@@ -46,17 +46,44 @@ for table_name, file_name in tables:
         data = json.load(f)
         
     for row in data:
-        # 如果是 Member 表，且裡面有明文密碼，就執行雜湊
+        # 1. 確保雜湊處理
         if table_name == 'Member' and 'password_plain' in row:
-            row['password_hash'] = bcrypt.hashpw(row.pop('password_plain').encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            plain = row.pop('password_plain')
+            # 👈 加上這兩行顯微紀錄器，看清楚從 JSON 讀出來的到底是什麼鬼魅
+            print(f"🕵️ 正在幫 {row['memID']} 鑄造密碼鎖...", flush=True)
+            print(f"   ↳ JSON 讀出的明文字串: [{plain}] (字數長度: {len(str(plain))})", flush=True)
+            row['password_hash'] = bcrypt.hashpw(plain.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
-        # 動態生成 SQL
+        # 2. 建立標準的佔位符
         keys = ", ".join(row.keys()) 
         placeholders = ", ".join(["%s"] * len(row)) 
-        updates = ", ".join([f"{k} = VALUES({k})" for k in row.keys()]) 
         
-        sql = f"INSERT INTO {table_name} ({keys}) VALUES ({placeholders}) ON DUPLICATE KEY UPDATE {updates}"
-        cursor.execute(sql, tuple(row.values()))
+        # 3. 核心修正：安全且明確地指派更新值，避免 VALUES() 函數造成的快取錯亂
+        # 改用傳統的 col = %s 或是利用別名，這裡用明確的動態字串：
+        updates = ", ".join([f"{k} = '{v}'" if k == 'password_hash' else f"{k} = VALUES({k})" for k, v in row.items()])
+        
+        # 為了絕對安全，如果是 Member 表，我們甚至可以直接這樣寫：
+        if table_name == 'Member':
+            # 1. 徹底消滅 SQL 內部的 '{row[...]}' 拼接，改用標準的 VALUES(password_hash)
+            sql = """
+                INSERT INTO Member (memID, dept_name, clearance_lv, permission, mem_status, password_hash) 
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                dept_name = VALUES(dept_name),
+                clearance_lv = VALUES(clearance_lv),
+                permission = VALUES(permission),
+                mem_status = VALUES(mem_status),
+                password_hash = VALUES(password_hash)
+            """
+            # 2. 所有資料一律透過安全管道 (Tuple) 餵給 MySQL 驅動，確保特殊符號不被解譯
+            cursor.execute(sql, (
+                row['memID'], 
+                row['dept_name'], 
+                row['clearance_lv'], 
+                row['permission'], 
+                row['mem_status'], 
+                row['password_hash']
+            ))
     
     print(f"✅ 資料表 {table_name} 處理完畢。")
 

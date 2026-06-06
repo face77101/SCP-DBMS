@@ -1,0 +1,244 @@
+/* ==========================================
+   基底與全域變數設定
+   ========================================== */
+:root {
+    --bg-color: #0c1112;        /* 接近黑色的極深邃暗灰綠 */
+    --card-bg: rgba(100, 16, 16, 0.45); /* 血液暗紅，帶有半透明感 */
+    --topbar-bg: #5a0505;       /* 頂部暗紅警示條 */
+    --text-color: #9da3a6;      /* 基金會終端機冷灰色文字 */
+    --input-bg: #121617;       /* 輸入框深黑色 */
+    --font-family: 'Courier New', Courier, monospace; /* 仿終端機等寬字體 */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-family);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ==========================================
+   頂部導覽列 (Topbar)
+   ========================================== */
+.topbar {
+    background-color: var(--topbar-bg);
+    padding: 10px 20px;
+    border-bottom: 2px solid #3a0202;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.scp-logo {
+    font-size: 24px;
+    color: #fff;
+    font-weight: bold;
+}
+
+.brand-title {
+    color: #fff;
+    font-size: 16px;
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+
+/* ==========================================
+   主內容區與登入卡片 (Login Card)
+   ========================================== */
+.login-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    /* 這裡可以選擇性加入 SCP 水印背景圖 */
+    background: radial-gradient(circle, rgba(12,17,18,0.2) 0%, rgba(12,17,18,0.9) 80%);
+}
+
+.login-card {
+    background-color: var(--card-bg);
+    padding: 40px 50px;
+    width: 450px;
+    border: 1px solid #7c1a1a;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+    text-align: center;
+}
+
+.login-card h2 {
+    color: #fff;
+    font-size: 26px;
+    letter-spacing: 4px;
+    margin-bottom: 35px;
+    font-weight: bold;
+}
+
+/* ==========================================
+   表單與輸入欄位 (Input Groups)
+   ========================================== */
+.input-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.input-group label {
+    width: 110px;
+    text-align: left;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #fff;
+}
+
+.input-group input {
+    flex: 1;
+    background-color: var(--input-bg);
+    border: 1px solid #2d3537;
+    color: #fff;
+    padding: 10px 12px;
+    font-size: 16px;
+    letter-spacing: 2px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* 輸入框聚焦時的科幻感微光特效 */
+.input-group input:focus {
+    border-color: #a32222;
+    box-shadow: 0 0 8px rgba(163, 34, 34, 0.5);
+}
+
+/* ==========================================
+   底部頁尾 (Footer)
+   ========================================== */
+.footer {
+    padding: 30px;
+    text-align: center;
+}
+
+.motto {
+    font-size: 18px;
+    color: #3b4446; /* 暗沉的灰字，如同背景圖章 */
+    letter-spacing: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+/* ==========================================
+   控制台專用版面配置 (Dashboard Grid)
+   ========================================== */
+.dashboard-body {
+    overflow-y: auto; /* 控制台資料很多，允許上下捲動 */
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 30px auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 搜尋區塊樣式 */
+.search-section {
+    background-color: rgba(16, 20, 21, 0.8);
+    border: 1px solid #2d3537;
+    padding: 20px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.search-box label {
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 1px;
+    font-size: 14px;
+}
+
+.search-box input {
+    flex: 1;
+    background-color: var(--input-bg);
+    border: 1px solid #7c1a1a; /* 採用硬核暗紅框線 */
+    color: #00ff00; /* 輸入的關鍵字呈終端機經典綠色 */
+    padding: 12px;
+    font-size: 14px;
+    outline: none;
+    letter-spacing: 1px;
+}
+
+/* ==========================================
+   SCP 機密資料表格 (Classified Table)
+   ========================================== */
+.table-section {
+    background-color: var(--card-bg); /* 延用你的血液暗紅透明色 */
+    border: 1px solid #7c1a1a;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    overflow-x: auto; /* 防欄位太多擠壓變形 */
+}
+
+.scp-table {
+    width: 100%;
+    border-collapse: collapse; /* 拔除雙重框線 */
+    text-align: left;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+.scp-table th, .scp-table td {
+    padding: 14px 16px;
+    border: 1px solid #5a1212; /* 格子間的暗沉紅色細線 */
+    vertical-align: top;
+}
+
+.scp-table th {
+    background-color: #4a0505; /* 表頭加深暗紅色 */
+    color: #fff;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 讓表格資料列在滑鼠滑過時產生高亮感 */
+.scp-table tbody tr:hover {
+    background-color: rgba(124, 26, 26, 0.3);
+}
+
+/* 實用輔助樣式 */
+.scp-id-col {
+    font-weight: bold;
+    color: #fff;
+}
+
+.center-text { text-align: center; }
+.text-left { text-align: left; line-height: 1.4; }
+
+.loading-text, .no-data-text {
+    text-align: center;
+    color: #656d70;
+    font-style: italic;
+    padding: 40px 0 !important;
+}
+
+.error-text {
+    text-align: center;
+    color: #ff0000;
+    font-weight: bold;
+    padding: 40px 0 !important;
+}

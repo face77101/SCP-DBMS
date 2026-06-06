@@ -1,26 +1,90 @@
 [
-  {
-    "memID": "O5000001O5",
-    "dept_name": "O5",
-    "clearance_lv": 3,
-    "permission": "A",
-    "mem_status": "normal",
-    "password_plain": "FAKE_PW_FOR_TEST"
-  },
-  {
-    "memID": "RD0000010B",
-    "dept_name": "RD",
-    "clearance_lv": 2,
-    "permission": "B",
-    "mem_status": "normal",
-    "password_plain": "FAKE_PW_FOR_TEST."
-  },
-  {
-    "memID": "RD0000010A",
-    "dept_name": "RD",
-    "clearance_lv": 3,
-    "permission": "A",
-    "mem_status": "normal",
-    "password_plain": "FAKE_PW_FOR_TEST."
-  }
+	{
+		"memID" : "O5000001O5",
+		"dept_name" : "O5",
+		"clearance_lv" : "3",
+		"permission" : "A",
+		"mem_status" : "normal",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000010A",
+		"dept_name" : "RD",
+		"clearance_lv" : "3",
+		"permission" : "A",
+		"mem_status" : "treating",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000010B",
+		"dept_name" : "RD",
+		"clearance_lv" : "2",
+		"permission" : "B",
+		"mem_status" : "normal",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000110A",
+		"dept_name" : "RD",
+		"clearance_lv" : "3",
+		"permission" : "A",
+		"mem_status" : "normal",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000111B",
+		"dept_name" : "RD",
+		"clearance_lv" : "2",
+		"permission" : "B",
+		"mem_status" : "normal",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000112B",
+		"dept_name" : "RD",
+		"clearance_lv" : "2",
+		"permission" : "B",
+		"mem_status" : "normal",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000113B",
+		"dept_name" : "RD",
+		"clearance_lv" : "2",
+		"permission" : "B",
+		"mem_status" : "normal",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000114C",
+		"dept_name" : "RD",
+		"clearance_lv" : "1",
+		"permission" : "C",
+		"mem_status" : "normal",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000115B",
+		"dept_name" : "RD",
+		"clearance_lv" : "2",
+		"permission" : "B",
+		"mem_status" : "normal",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000116C",
+		"dept_name" : "RD",
+		"clearance_lv" : "1",
+		"permission" : "C",
+		"mem_status" : "suspended",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	},
+	{
+		"memID" : "RD0000117C",
+		"dept_name" : "RD",
+		"clearance_lv" : "1",
+		"permission" : "C",
+		"mem_status" : "normal",
+		"password_plain" : "FAKE_PW_FOR_TESTING_ONLY"
+	}
 ]

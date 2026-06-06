@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCP FOUNDATION - SYSTEM CONTROL PANEL</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-body">
+
+    <header class="topbar">
+        <div class="logo-area">
+            <span class="scp-logo">◎</span>
+            <span class="brand-title">SCP DBMS - SECURE NETWORK</span>
+        </div>
+        <div class="user-status">
+            <span id="current-clearance">CLEARANCE: LEVEL -</span>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <section class="search-section">
+            <div class="search-box">
+                <label for="scp-search">SEARCH KEYWORD:</label>
+                <input type="text" id="scp-search" placeholder="Enter scpID or Description..." autocomplete="off" spellcheck="false">
+            </div>
+        </section>
+
+        <section class="table-section">
+            <table class="scp-table">
+                <thead>
+                    <tr>
+                        <th>scpID</th>
+                        <th>Status</th>
+                        <th>Threat Level</th>
+                        <th>Clearance</th>
+                        <th>Appearance</th>
+                        <th>Abilities</th>
+                        <th>Weakness</th>
+                        <th>Others</th>
+                    </tr>
+                </thead>
+                <tbody id="scp-table-body">
+                    <tr>
+                        <td colspan="8" class="loading-text">LOADING CLASSIFIED DATA...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

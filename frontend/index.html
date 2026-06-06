@@ -1,2 +1,44 @@
-<h1>SCP foundation's front-end website is under construction....</h1>
-<h1>testing testing 123~@-@</h1>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCP FOUNDATION - LOGIN SYSTEM</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="topbar">
+        <div class="logo-area">
+            <span class="scp-logo">◎</span>
+            <span class="brand-title">SCP FOUND. DBMS</span>
+        </div>
+    </header>
+
+    <main class="login-container">
+        <div class="login-card">
+            <h2>LOGIN</h2>
+            
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">USER:</label>
+                    <input type="text" id="username" autocomplete="off" required spellcheck="false">
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">PASSWORD:</label>
+                    <input type="password" id="password" required>
+                </div>
+                
+                <button type="submit" style="display: none;"></button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p class="motto">SECURE, CONTAIN, PROTECT</p>
+    </footer>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>
