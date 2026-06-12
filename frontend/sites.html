@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SITE</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; background: #1a1a1a; color: #e0e0e0; padding: 2rem; }
+    h1 { font-size: 28px; text-align: center; letter-spacing: 8px; margin-bottom: 2rem; color: white; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { background: #00bcd4; color: #1a1a1a; }
+    thead th { padding: 8px 12px; text-align: left; font-weight: 500; letter-spacing: 1px; }
+    tbody tr { border-bottom: 1px solid #333; }
+    tbody tr:hover { background: #2a2a2a; }
+    tbody tr.broken { background: #7a1a1a; }
+    tbody tr.broken:hover { background: #8a2a2a; }
+    tbody td { padding: 8px 12px; }
+    .status-inuse { color: #00e676; font-weight: 500; }
+    .status-idl { color: #e0e0e0; }
+    .struct-broke { color: #ff5252; font-weight: 500; }
+    .struct-funct { color: #e0e0e0; }
+    .error { color: red; margin-top: 1rem; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <h1>SITE</h1>
+  <div class="grid" id="grid"></div>
+  <p class="error" id="error-msg"></p>
+
+  <script>
+    fetch('/api/admin/sites')
+      .then(res => res.json())
+      .then(data => {
+        const floors = {}
+        data.forEach(row => {
+          const floor = row.siteID.split('-')[0]
+          if (!floors[floor]) floors[floor] = []
+          floors[floor].push(row)
+        })
+
+        const grid = document.getElementById('grid')
+        const floorKeys = Object.keys(floors).sort()
+
+        floorKeys.forEach(floor => {
+          const rows = floors[floor]
+          const isBroken = row => row.door_status == 1 && row.structure === 'Broken'
+
+          const tbody = rows.map(row => `
+            <tr class="${isBroken(row) ? 'broken' : ''}">
+              <td>${row.siteID}</td>
+              <td>${row.scpID ?? '-'}</td>
+              <td class="${row.site_status == 1 ? 'status-inuse' : 'status-idl'}">
+                ${row.site_status == 1 ? 'INUSE' : 'IDL'}
+              </td>
+              <td>${row.door_status == 1 ? 'LOCK' : 'OPEN'}</td>
+              <td class="${row.structure === 'Broken' ? 'struct-broke' : 'struct-funct'}">
+                ${row.structure === 'Broken' ? 'BROKE' : 'FUNCT.'}
+              </td>
+            </tr>
+          `).join('')
+
+          const table = `
+            <table>
+              <thead>
+                <tr>
+                  <th>SITE_ID</th>
+                  <th>SCP_ID</th>
+                  <th>STAT.</th>
+                  <th>DOOR STAT.</th>
+                  <th>STRUCT.</th>
+                </tr>
+              </thead>
+              <tbody>${tbody}</tbody>
+            </table>
+          `
+          grid.innerHTML += table
+        })
+      })
+      .catch(err => {
+        document.getElementById('error-msg').textContent = '載入失敗：' + err
+      })
+  </script>
+
+</body>
+</html>
