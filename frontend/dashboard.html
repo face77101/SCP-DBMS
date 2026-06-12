@@ -13,40 +13,93 @@
             <span class="scp-logo">◎</span>
             <span class="brand-title">SCP DBMS - SECURE NETWORK</span>
         </div>
+        
+        <nav class="dashboard-nav">
+            <button class="nav-btn active" data-target="scp-view-section">SCP DATABASE</button>
+            <button class="nav-btn" data-target="report-upload-section">SUBMIT REPORT</button>
+        </nav>
+
         <div class="user-status">
             <span id="current-clearance">CLEARANCE: LEVEL -</span>
         </div>
     </header>
 
     <main class="dashboard-container">
-        <section class="search-section">
-            <div class="search-box">
-                <label for="scp-search">SEARCH KEYWORD:</label>
-                <input type="text" id="scp-search" placeholder="Enter scpID or Description..." autocomplete="off" spellcheck="false">
-            </div>
-        </section>
+        
+        <div id="scp-view-section" class="tab-content active">
+            <section class="search-section">
+                <div class="search-box">
+                    <label for="scp-search">SEARCH KEYWORD:</label>
+                    <input type="text" id="scp-search" placeholder="Enter scpID or Description..." autocomplete="off" spellcheck="false">
+                </div>
+            </section>
 
-        <section class="table-section">
-            <table class="scp-table">
-                <thead>
-                    <tr>
-                        <th>scpID</th>
-                        <th>Status</th>
-                        <th>Threat Level</th>
-                        <th>Clearance</th>
-                        <th>Appearance</th>
-                        <th>Abilities</th>
-                        <th>Weakness</th>
-                        <th>Others</th>
-                    </tr>
-                </thead>
-                <tbody id="scp-table-body">
-                    <tr>
-                        <td colspan="8" class="loading-text">LOADING CLASSIFIED DATA...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
+            <section class="table-section">
+                <table class="scp-table">
+                    <thead>
+                        <tr>
+                            <th>scpID</th>
+                            <th>Status</th>
+                            <th>Threat Level</th>
+                            <th>Clearance</th>
+                            <th>Appearance</th>
+                            <th>Abilities</th>
+                            <th>Weakness</th>
+                            <th>Others</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scp-table-body">
+                        <tr><td colspan="8" class="loading-text">LOADING CLASSIFIED DATA...</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <div id="report-upload-section" class="tab-content">
+            <section class="report-form-wrapper">
+                <h2>RESEARCH REPORT INJECTOR</h2>
+                <p class="form-tip">SECURITY WARNING: ALL SUBMISSIONS ARE LOGGED BY O5 COUNCIL. AUTHOR ID WILL BE AUTOMATICALLY LINKED VIA SESSION.</p>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>REPORT TITLE (REQUIRED):</label>
+                        <input type="text" id="title" value="report_title" required>
+                    </div>
+                    <div class="form-group">
+                        <label>TARGET SCP-ID (REQUIRED):</label>
+                        <input type="text" id="scpID" value="SCP-001" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>ANOMALOUS ABILITIES:</label>
+                        <textarea id="abilities" rows="3"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>KNOWN WEAKNESSES:</label>
+                        <textarea id="weakness" rows="3"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>PHYSICAL APPEARANCE:</label>
+                        <textarea id="appearance" rows="3"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>ADDITIONAL LOGS / OTHERS:</label>
+                        <textarea id="others" rows="3"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>INVOLVED PERSONNEL ID (Separate with comma):</label>
+                        <input type="text" id="involvedMembers" value="RD0000117C">
+                    </div>
+                </div>
+
+                <button class="terminal-btn" id="btn-submit-report">EXECUTE MySQL DATA INJECTION</button>
+
+                <div class="terminal-log-box">
+                    <div class="log-header">TERMINAL INJECTOR LOG</div>
+                    <pre id="responseLog">SYSTEM IDLE. AWAITING OPERATION...</pre>
+                </div>
+            </section>
+        </div>
+
     </main>
 
     <script src="js/main.js"></script>

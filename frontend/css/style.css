@@ -242,3 +242,152 @@ body {
     font-weight: bold;
     padding: 40px 0 !important;
 }
+/* ==========================================
+   🧭 Navbar 導覽分頁按鈕控制
+   ========================================== */
+.dashboard-nav {
+    display: flex;
+    gap: 10px;
+    margin-left: 40px;
+}
+
+.nav-btn {
+    background: transparent;
+    border: 1px solid #5a1212;
+    color: var(--text-color);
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+}
+
+.nav-btn:hover {
+    background-color: rgba(90, 5, 5, 0.3);
+    color: #fff;
+    border-color: #a32222;
+}
+
+.nav-btn.active {
+    background-color: var(--topbar-bg);
+    color: #fff;
+    border-color: #7c1a1a;
+    box-shadow: 0 0 8px rgba(124, 26, 26, 0.6);
+}
+
+/* 分頁隱藏與顯示的邏輯核心 */
+.tab-content {
+    display: none; /* 預設全部隱藏 */
+}
+
+.tab-content.active {
+    display: block; /* 只有加上 active 的分頁才看得到 */
+}
+
+/* ==========================================
+   🖋️ 報告上傳表單整容樣式 (Tactical Form)
+   ========================================== */
+.report-form-wrapper {
+    background-color: var(--card-bg);
+    border: 1px solid #7c1a1a;
+    padding: 30px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.report-form-wrapper h2 {
+    color: #fff;
+    font-size: 20px;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.form-tip {
+    font-size: 11px;
+    color: #7c1a1a;
+    margin-bottom: 25px;
+    letter-spacing: 0.5px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group.full-width {
+    grid-column: span 2;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.form-group input, .form-group textarea {
+    background-color: var(--input-bg);
+    border: 1px solid #2d3537;
+    color: #fff;
+    padding: 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+    border-color: #a32222;
+}
+
+/* 巨型提交按鈕 */
+.terminal-btn {
+    width: 100%;
+    background-color: #5a0505;
+    color: #fff;
+    border: 1px solid #7c1a1a;
+    padding: 15px;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 2px;
+    margin-top: 30px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.terminal-btn:hover {
+    background-color: #a32222;
+    box-shadow: 0 0 10px rgba(163, 34, 34, 0.5);
+}
+
+/* 終端機 Log 日誌方塊 */
+.terminal-log-box {
+    margin-top: 25px;
+    border: 1px solid #2d3537;
+}
+
+.log-header {
+    background-color: #121617;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: #5a1212;
+    font-weight: bold;
+    border-bottom: 1px solid #2d3537;
+}
+
+.terminal-log-box pre {
+    background-color: #050708;
+    padding: 15px;
+    margin: 0;
+    color: #00ff00;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
