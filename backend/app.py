@@ -404,7 +404,6 @@ def search_reports():
         if 'conn' in locals() and conn.open:
             conn.close()
 
-
 # ==========================================
 # 工作 3-3 實作：API - 「O5 審查並統整至 SCP 字典」(黃家福)
 # ==========================================
@@ -479,29 +478,155 @@ def approve_report():
         if 'conn' in locals() and conn.open:
             conn.close()
 
-@app.get('/members')
-def members_page():
-    return send_from_directory('/frontend', 'mem.html')
+# =========================================================================
+# 🚨 【收編合體版 API】/api/admin/sites
+# =========================================================================
+@app.route('/api/admin/sites', methods=['GET', 'OPTIONS'])
+def get_admin_sites():
+    # 1. 處理瀏覽器的 CORS 預檢
+    if request.method == 'OPTIONS':
+        response = jsonify({"status": "success"})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
+        response.headers.add("Access-Control-Allow-Methods", "GET, OPTIONS")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
 
-@app.get('/members/add')
-def add_member_page():
-    return send_from_directory('/frontend', 'add_mem.html')
+    # 2. 驗證特工身分（共享 app.py 的安全機制）
+    current_mem_id = session.get('memID')
+    if not current_mem_id:
+        response = jsonify({"status": "error", "message": "拒絕存取：尚未登入系統。"})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 401
 
-@app.get('/sites')
-def sites_page():
-    return send_from_directory('/frontend', 'sites.html')
+    # 3. 連線資料庫（直接調用 app.py 既有的連線函式，拒絕重複造輪子）
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            # 💡 完美融入同學的 LEFT JOIN 邏輯，確保能查到 contained_in 裡面的 scpID
+            sql = """
+                SELECT siteID, scpID, site_status, door_status, structure 
+                FROM Site LEFT JOIN contained_in USING (siteID)
+            """
+            cursor.execute(sql)
+            site_data = cursor.fetchall()
 
-@app.get('/members')
-def members_page():
-    return send_from_directory('/frontend', 'mem.html')
+        response = jsonify(site_data)
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
 
-@app.get('/members/add')
-def add_member_page():
-    return send_from_directory('/frontend', 'add_mem.html')
+    except Exception as e:
+        response = jsonify({"status": "error", "message": f"資料庫查詢失敗: {str(e)}"})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 500
+    finally:
+        if 'connection' in locals():
+            connection.close()
 
-@app.get('/sites')
-def sites_page():
-    return send_from_directory('/frontend', 'sites.html')
+# =========================================================================
+# 🔬 [DEBUG GATEWAY] /api/admin/members 超顯微鏡雷達偵錯版 API
+# =========================================================================
+@app.route('/api/admin/members', methods=['GET', 'POST', 'OPTIONS'])
+def admin_members_api_gateway():
+    
+    # 🔌 1. CORS 預檢偵測
+    if request.method == 'OPTIONS':
+        response = jsonify({"status": "success"})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
+        response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
+
+    # 📡 2. 啟動顯微鏡：強行攔截並列印本輪請求的切片數據
+    print("\n👥 " + "×"*60)
+    print(f"【成員網關核心偵錯】收到核心請求: {request.method} -> /api/admin/members")
+    print(f"[*] 瀏覽器標頭帶過來的原始 Cookie 內容: {request.headers.get('Cookie')}")
+    print(f"[*] Flask 本輪解析出的 Cookies 字典: {dict(request.cookies)}")
+    print(f"[*] 內部 Session 解密結果 (當前記憶體): {dict(session)}")
+    print(f"[*] 讀取到的特工身分 memID: {session.get('memID')}")
+    print("×"*65)
+
+    # 🔑 3. 安全 Session 哨兵校驗
+    if not session.get('memID'):
+        print(f"[X] 攔截：本輪 {request.method} 請求身分驗證失敗！即將噴出 401。")
+        print("×"*60 + "\n")
+        response = jsonify({"error": "ACCESS DENIED: Session expired or invalid."})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 401
+
+    print(f"[O] 放行：身分驗證通過！特工 {session.get('memID')} 正在執行 {request.method} 操作。")
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 🔍 模組 A：名單讀取 (GET)
+            if request.method == 'GET':
+                cursor.execute("""
+                    SELECT memID, dept_name, clearance_lv, permission, mem_status 
+                    FROM Member
+                """)
+                members = cursor.fetchall()
+                response = jsonify(members)
+                
+            # 💉 模組 B：處理全新特工數據寫入 (POST)
+            elif request.method == 'POST':
+                data = request.get_json()
+                dept_name    = data.get('dept_name')
+                clearance_lv = data.get('clearance_lv')
+                permission   = data.get('permission')
+                mem_status   = data.get('mem_status', 'normal')
+                raw_password = data.get('password')
+
+                # Bcrypt 安全雜湊加密
+                password_hash = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+                # 自動計算序號
+                cursor.execute("SELECT COUNT(*) AS cnt FROM Member WHERE dept_name = %s", (dept_name,))
+                count = cursor.fetchone()['cnt']
+                next_num = count + 1
+
+                # =====================================================================
+                # 👑 【O5 議會最高特權分支】依據部門特殊規格調整 ID 結構
+                # =====================================================================
+                if dept_name.upper() == 'O5':
+                    # O5 專屬：2碼部門 + 6位流水號 + 2碼 O5 = 10碼
+                    # 範例：'O5' + '000001' + 'O5' = 'O5000001O5'
+                    mem_id = f"{dept_name}{str(next_num).zfill(6)}O5"
+                else:
+                    # 一般特工：2碼部門 + 7位流水號 + 1碼編級 = 10碼
+                    # 範例：'RD' + '0000010' + 'B' = 'RD0000010B'
+                    mem_id = f"{dept_name}{str(next_num).zfill(7)}{permission}"
+                # =====================================================================
+
+                cursor.execute("""
+                    INSERT INTO Member (memID, dept_name, clearance_lv, permission, mem_status, password_hash)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (mem_id, dept_name, clearance_lv, permission, mem_status, password_hash))
+                conn.commit()
+
+                print(f"🎉 成功將新特工 {mem_id} 自動計算並固化至 MySQL 完畢！")
+                response = jsonify({'message': '新增成功', 'memID': mem_id})
+
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        print("×"*60 + "\n")
+        return response, 200
+
+    except Exception as e:
+        print(f"[🔥 內部崩潰] 執行失敗，原因: {e}")
+        response = jsonify({'error': str(e)})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        print("×"*60 + "\n")
+        return response, 500
+    finally:
+        conn.close()
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True) #每次你改 Code，後端就會自動同步，不用手動重啟 Docker！

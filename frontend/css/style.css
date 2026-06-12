@@ -391,3 +391,30 @@ body {
     white-space: pre-wrap;
     word-break: break-all;
 }
+
+/* ======================================================== */
+/* ⚡ 終端機按鈕禁用狀態：變暗鎖定 + 鼠標變載入圓圈 (修正版)   */
+/* ======================================================== */
+.terminal-btn:disabled, 
+.nav-btn:disabled,
+button.terminal-btn:disabled,
+select.status-updater:disabled {
+    background: #1a1a1a !important;       /* 👈 變暗：換成最純粹的極深灰 */
+    color: #555555 !important;            /* 👈 字體顏色變暗沉灰字 */
+    border-color: #333333 !important;      /* 👈 邊框同步熄滅 */
+    cursor: wait !important;              /* 👈 【核心】滑鼠指上來立刻變成動態旋轉的小圓圈！ */
+    box-shadow: none !important;          /* 👈 物理拔除一切發光微芒 */
+    pointer-events: none !important;      /* 👈 雙重保險：徹底阻斷滑鼠一切點擊穿透 */
+    opacity: 0.6 !important;
+}
+
+/* 使用屬性選擇器與 !important 確保絕對權重 */
+button[disabled], 
+button:disabled {
+    background-color: #1a1a1a !important;
+    color: #555 !important;
+    border-color: #333 !important;
+    cursor: wait !important;          /* 強制變圓圈 */
+    pointer-events: none !important; /* 強制關閉點擊穿透 */
+    opacity: 0.6 !important;
+}

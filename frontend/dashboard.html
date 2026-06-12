@@ -5,6 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SCP FOUNDATION - SYSTEM CONTROL PANEL</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .site-monitor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+        @media (max-width: 900px) {
+            .site-monitor-grid { grid-template-columns: 1fr; }
+        }
+        .floor-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+        .floor-title {
+            margin-bottom: 1rem;
+            color: #00bcd4;
+            font-size: 18px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+        .scp-table tbody tr.broken-containment {
+            background: #5a1111 !important;
+        }
+        .struct-broke { color: #ff5252; font-weight: bold; }
+        .struct-funct { color: #e0e0e0; }
+        .status-inuse { color: #00e676; font-weight: bold; }
+        .status-idl { color: #a0a0a0; }
+
+        /* 🧪 額外新增：優化成員名單下拉選單與連結的終端機外觀 */
+        .scp-table select {
+            background: #222;
+            color: #00bcd4;
+            border: 1px solid #444;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            cursor: pointer;
+            outline: none;
+        }
+        .scp-table select:focus {
+            border-color: #00bcd4;
+        }
+        .scp-table td a {
+            color: #00bcd4;
+            text-decoration: none;
+        }
+        .scp-table td a:hover {
+            text-decoration: underline;
+            text-shadow: 0 0 4px rgba(0, 188, 212, 0.5);
+        }
+    </style>
 </head>
 <body class="dashboard-body">
 
@@ -17,6 +72,8 @@
         <nav class="dashboard-nav">
             <button class="nav-btn active" data-target="scp-view-section">SCP DATABASE</button>
             <button class="nav-btn" data-target="report-upload-section">SUBMIT REPORT</button>
+            <button class="nav-btn" data-target="sites-section">SITES</button>
+            <button class="nav-btn" data-target="members-section">MEMBERS</button>
         </nav>
 
         <div class="user-status">
@@ -100,6 +157,107 @@
             </section>
         </div>
 
+        <div id="sites-section" class="tab-content">
+            <section class="report-form-wrapper">
+                <h2>SITE RECEP-ROOM MONITOR</h2>
+                <p class="form-tip">REAL-TIME MONITORING STATUS OF CONTAINMENT CHAMBER STRUCTURAL INTEGRITY.</p>
+                
+                <div class="site-monitor-grid" id="site-grid">
+                    <div class="loading-text" style="grid-column: span 2; text-align: center;">AWAITING ENCRYPTED DATASTREAM...</div>
+                </div>
+                
+                <p class="error" id="site-error-msg"></p>
+            </section>
+        </div>
+
+        <div id="members-section" class="tab-content">
+            <section class="report-form-wrapper" id="member-list-subview">
+                <h2>PERSONNEL REGISTRY DIRECTORY</h2>
+                <p class="form-tip" id="member-subtitle">AWAITING CLASSIFIED AGENT DATASTREAM...</p>
+                
+                <section class="search-section" style="margin-bottom: 1.5rem; padding: 0;">
+                    <div class="search-box" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 1rem;">
+                        <div style="flex-grow: 1;">
+                            <label for="member-search">SEARCH FIELD OPERATIVE / DEPARTMENT:</label>
+                            <input type="text" id="member-search" placeholder="Enter Agent ID or Department..." autocomplete="off" spellcheck="false">
+                        </div>
+                        <button class="terminal-btn" id="btn-switch-to-add" style="margin-top: 23px; padding: 10px 20px; white-space: nowrap; height: 43px;">+ ADD PERSONNEL</button>
+                    </div>
+                </section>
+
+                <section class="table-section">
+                    <table class="scp-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>DEPARTMENT</th>
+                                <th>CLEARANCE LEVEL</th>
+                                <th>PERMISSION</th>
+                                <th>STATUS</th>
+                                <th>MODIFY STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="member-table-body">
+                            <tr><td colspan="6" class="loading-text">LOADING CORE AGENT ROSTERS...</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+                <p class="error" id="member-error-msg"></p>
+            </section>
+
+            <section class="report-form-wrapper" id="member-add-subview" style="display: none;">
+                <h2>NEW PERSONNEL INJECTOR</h2>
+                <p class="form-tip">SECURITY WARNING: CREATING NEW AGENT CREDENTIALS. ALL REGISTRIES ARE AUTOMATICALLY ENCRYPTED WITH Salted Bcrypt.</p>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>DEPARTMENT ACRONYM (REQUIRED):</label>
+                        <input type="text" id="add-dept-name" placeholder="e.g., RD, MG, MTF, O5" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>SECURITY CLEARANCE LEVEL:</label>
+                        <select id="add-clearance-lv">
+                            <option value="0">LEVEL 0</option>
+                            <option value="1">LEVEL 1</option>
+                            <option value="2">LEVEL 2</option>
+                            <option value="3">LEVEL 3</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>PERSONNEL CLASSIFICATION:</label>
+                        <select id="add-permission">
+                            <option value="A">CLASS A (Strategic/O5)</option>
+                            <option value="B">CLASS B (Field Director)</option>
+                            <option value="C">CLASS C (Logistics/Researcher)</option>
+                            <option value="D">CLASS D (Expendable Personnel)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>INITIAL PSYCHOLOGICAL STATUS:</label>
+                        <select id="add-mem-status">
+                            <option value="normal">Normal</option>
+                            <option value="abnormal">Abnormal</option>
+                            <option value="treating">Treating</option>
+                            <option value="dead">Dead</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>INITIAL ACCESS PASSWORD (REQUIRED):</label>
+                        <input type="password" id="add-password" placeholder="Enter temporary temporary security password...">
+                    </div>
+                </div>
+
+                <div class="actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button class="terminal-btn" id="btn-cancel-add" style="background: #222; border-color: #444; color: #888;">CANCEL</button>
+                    <button class="terminal-btn" id="btn-execute-add">EXECUTE REGISTRY INJECTION</button>
+                </div>
+
+                <div class="terminal-log-box" style="margin-top: 1.5rem;">
+                    <div class="log-header">REGISTRY INJECTOR LOG</div>
+                    <pre id="add-member-log">SYSTEM IDLE. AWAITING INJECTION OPERATION...</pre>
+                </div>
+            </section>
+        </div>
     </main>
 
     <script src="js/main.js"></script>
