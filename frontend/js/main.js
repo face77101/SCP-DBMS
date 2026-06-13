@@ -15,6 +15,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     document.getElementById('current-clearance').innerText = `CLEARANCE: LEVEL ${clearanceLv}`;
+    // 💡 請將此段加在 main.js 內，0.身分驗證安保機制的下方
+    const memStatus = localStorage.getItem('mem_status') || 'normal'; // 確保登入時有將狀態存入
+
+    if (memStatus === 'abnormal') {
+        const abnormalOverlay = document.getElementById('abnormal-overlay');
+        if (abnormalOverlay) {
+            abnormalOverlay.classList.add('active'); // 🟢 直接全螢幕暗紅鎖死，沒收全部操作！
+            console.error("☣️ [CRITICAL LOCKOUT] OPERATIVE STATUS IS ABNORMAL. TERMINAL DISCONNECTED.");
+            return; // 物理阻斷後面所有 API 的初始化加載
+        }
+    }
 
     // ========================================================
     // 🎯 【核心共用工具函式庫 (Helpers)】
@@ -22,10 +33,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const lockdownOverlay = document.getElementById('lockdown-overlay'); // 📢 全域阻斷遮罩錨點
     const btnSwitchToAdd = document.getElementById('btn-switch-to-add');   // 📢 新增特工按鈕錨點
     
-    // 🔌 統一 API 請求元件：自動引渡憑證與狀態碼攔截
+    // 🔌 統一 API 請求元件：自動引渡憑證與狀態碼攔截（加入 403 強制鎖定矩陣）
     async function requestAPI(url, options = {}) {
         const defaultOptions = { credentials: 'include' };
         const response = await fetch(url, { ...defaultOptions, ...options });
+        
+        // 💡 【核心優化】觸發 403 瞬間全螢幕封鎖
+        if (response.status === 403) {
+            console.error("🚨 [SECURITY BREACH] DETECTED 403 FORBIDDEN. INITIALIZING LOCKDOWN PROTOCOL.");
+            const abnormalOverlay = document.getElementById('abnormal-overlay');
+            if (abnormalOverlay) {
+                abnormalOverlay.style.display = 'flex'; // 強制讓阻斷遮罩在畫面上顯示（遮蔽全螢幕）
+                abnormalOverlay.classList.add('active'); // 啟用可能存在的 CSS 動態效果
+            }
+            throw new Error("CRITICAL SECURITY ERROR: 403 FORBIDDEN. TERMINAL LOCKED DOWN.");
+        }
+
         if (!response.ok) {
             throw new Error(`HTTP AUTHENTICATION ERROR: ${response.status}`);
         }

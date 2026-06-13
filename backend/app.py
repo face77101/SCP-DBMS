@@ -45,6 +45,14 @@ def get_db_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
+# 🛡️ 核心安保 Helper：動態熔斷異常精神狀態者的所有寫入/變更請求
+def check_operative_sanity(cursor, mem_id):
+    cursor.execute("SELECT mem_status FROM Member WHERE memID = %s", (mem_id,))
+    res = cursor.fetchone()
+    if res and res.get('mem_status') == 'abnormal':
+        return False
+    return True
+
 # 靜態路由導向
 @app.route('/')
 def index():
@@ -72,7 +80,7 @@ def login():
 
         conn = get_db_connection()
         with conn.cursor() as cursor:
-            sql = "SELECT memID, password_hash, clearance_lv, dept_name FROM Member WHERE memID = %s"
+            sql = "SELECT memID, password_hash, clearance_lv, dept_name, mem_status FROM Member WHERE memID = %s"
             cursor.execute(sql, (username,))
             user = cursor.fetchone()
 
@@ -92,6 +100,7 @@ def login():
                 "message": "登入成功，歡迎回到站點",
                 "clearance_lv": user['clearance_lv'],
                 "dept_name": user['dept_name'],  
+                "mem_status": user['mem_status'], # 👈 傳回精神狀態讓前端同步啟動黑屏
                 "redirect": "dashboard.html"
             }), 200
         else:
@@ -104,7 +113,7 @@ def login():
         if 'conn' in locals(): conn.close()
 
 # =========================================================================
-# 🟢 【核心正名對齊版】研究報告上傳 /api/reports/upload (100% 契合新 DDL)
+# 🟢 研究報告上傳 /api/reports/upload (🛡️ 納入心理異常防禦熔斷)
 # =========================================================================
 @app.route('/api/reports/upload', methods=['POST'])
 def upload_report():
@@ -132,6 +141,10 @@ def upload_report():
         conn = get_db_connection()
         try:
             with conn.cursor() as cursor:
+                # ☣️ 熔斷安全檢查：禁止精神異常者提交
+                if not check_operative_sanity(cursor, current_mem_id):
+                    return jsonify({"status": "error", "message": "403 Forbidden: 精神狀態異常，研究報告提交功能已遭安保鎖定。"}), 403
+
                 sql_report = """
                     INSERT INTO Report (cmt_time, title, appearance, abilities, weakness, others, scpID)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -225,7 +238,7 @@ def search_reports():
         if 'conn' in locals(): conn.close()
 
 # =========================================================================
-# 【API 5-A】O5 審查通過：情報動態追加版 (✨ 已整合動態權限等級固化)
+# 【API 5-A】O5 審查通過 (🛡️ 納入心理異常防禦熔斷)
 # =========================================================================
 @app.route('/api/O5/approve', methods=['POST'])
 def approve_report():
@@ -237,13 +250,15 @@ def approve_report():
 
     data = request.get_json()
     report_id = data.get('reportID')
-    
-    # 🟢 核心修正：同步接收前端下拉表單傳遞過來的全新安保等級選值
     frontend_clearance_lv = data.get('clearance_lv')
 
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
+            # ☣️ 熔斷安全檢查：禁止精神異常者進行審核通過
+            if not check_operative_sanity(cursor, current_mem_id):
+                return jsonify({"status": "error", "message": "403 Forbidden: 精神狀態異常，情報核准與固化功能已全面鎖定。"}), 403
+
             cursor.execute("SELECT clearance_lv FROM Member WHERE memID = %s", (current_mem_id,))
             user = cursor.fetchone()
             
@@ -255,9 +270,6 @@ def approve_report():
             if not report:
                 return jsonify({"status": "error", "message": "找不到該研究報告"}), 404
 
-            # 💡 【高雅的 SQL 動態追加矩陣 + 權限等級同步更新】
-            # 在進行 CONCAT 串接新情報的同時，將 clearance_lv 的覆蓋更新一併納入。
-            # 如果前端有傳送變更的等級，則更新為新等級；若為 None 則維持原樣 (COALESCE(clearance_lv, '0'))
             update_sql = """
                 UPDATE SCP SET 
                     appearance = IF(LENGTH(COALESCE(appearance, '')) = 0, %s, CONCAT(appearance, ' / ', %s)),
@@ -275,13 +287,11 @@ def approve_report():
                 report['abilities'], report['abilities'],
                 report['weakness'], report['weakness'],
                 report['others'], report['others'],
-                frontend_clearance_lv, # 👈 正式灌入 O5 指定的最新安保等級
+                frontend_clearance_lv, 
                 report['scpID']
             ))
             
-            # 【高雅 CASCADE 閉環】物理清洗 Report 主表
             cursor.execute("DELETE FROM Report WHERE reportID = %s", (report_id,))
-            
             conn.commit()
             return jsonify({"status": "success", "message": "情報與權限等級整合成功。"}), 200
     except Exception as e:
@@ -292,7 +302,7 @@ def approve_report():
         if 'conn' in locals(): conn.close()
 
 # =========================================================================
-# 🚨 【全新擴充 API 5-B】O5 審查不通過：駁回並銷毀報告
+# 🚨 【全新擴充 API 5-B】O5 審查不通過 (🛡️ 納入心理異常防禦熔斷)
 # =========================================================================
 @app.route('/api/O5/reject', methods=['POST'])
 def reject_report():
@@ -308,6 +318,10 @@ def reject_report():
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
+            # ☣️ 熔斷安全檢查
+            if not check_operative_sanity(cursor, current_mem_id):
+                return jsonify({"status": "error", "message": "403 Forbidden: 精神狀態異常，報告駁回功能鎖定。"}), 403
+
             cursor.execute("SELECT clearance_lv FROM Member WHERE memID = %s", (current_mem_id,))
             user = cursor.fetchone()
             if not user or int(user['clearance_lv']) < 3:
@@ -343,7 +357,7 @@ def get_admin_sites():
         if 'conn' in locals(): conn.close()
 
 # =========================================================================
-# 【API 7】特工管理網關 /api/admin/members (🛡️ 安保級別動態情資隔離版)
+# 【API 7】特工管理網關 (🛡️ 納入心理異常防禦熔斷：禁止異常者新增人員)
 # =========================================================================
 @app.route('/api/admin/members', methods=['GET', 'POST'])
 def admin_members_api_gateway():
@@ -355,19 +369,15 @@ def admin_members_api_gateway():
     try:
         with conn.cursor() as cursor:
             if request.method == 'GET':
-                # 🛡️ Step 1. 先查出當前登入特工自己的安保層級
                 cursor.execute("SELECT clearance_lv FROM Member WHERE memID = %s", (current_mem_id,))
                 current_user = cursor.fetchone()
                 
-                # 如果找不到該特工，安全起見直接阻斷
                 if not current_user or current_user.get('clearance_lv') is None:
                     return jsonify({"error": "ACCESS DENIED: Invalid operative registry."}), 403
                 
                 my_clearance = int(current_user['clearance_lv'])
                 print(f"🕵️ [MEMBER GUARD] 特工 {current_mem_id} (Level {my_clearance}) 正在請求成員名單...")
 
-                # 🛡️ Step 2. 動態過濾 SQL：只准查詢 clearance_lv 小於或等於自己的成員
-                # 這樣低階特工絕對無法向下撈取到高階長官（如 O5）的機密隱私
                 sql_filter = """
                     SELECT memID, dept_name, clearance_lv, permission, mem_status 
                     FROM Member 
@@ -376,11 +386,13 @@ def admin_members_api_gateway():
                 """
                 cursor.execute(sql_filter, (my_clearance,))
                 members_list = cursor.fetchall()
-                
                 return jsonify(members_list), 200
                 
             elif request.method == 'POST':
-                # (原本的 POST 新增特工邏輯完全保留)
+                # ☣️ 熔斷安全檢查：精神異常者絕對禁止「編制、新增特工人員」
+                if not check_operative_sanity(cursor, current_mem_id):
+                    return jsonify({"error": "403 Forbidden: 精神狀態異常特工無權調動或指派新進人員編制。"}), 403
+
                 data = request.get_json()
                 dept_name = data.get('dept_name', '').strip()
                 clearance_lv = data.get('clearance_lv')
@@ -415,12 +427,11 @@ def admin_members_api_gateway():
     finally:
         if 'conn' in locals(): conn.close()
 
-    # =========================================================================
-# 🔒 【全新擴充 API 7-B】動態修改特工精神狀態 (修正前端 PATCH 405 錯位臭蟲)
+# =========================================================================
+# 🔒 【API 7-B】動態修改特工精神狀態 (🛡️ 納入心理異常防禦熔斷：禁止異常者修改任何人狀態)
 # =========================================================================
 @app.route('/api/admin/members/<mem_id>/status', methods=['PATCH'])
 def update_member_status(mem_id):
-    # 🛡️ 安全檢查：確保操作者有登入
     current_mem_id = session.get('memID')
     if not current_mem_id:
         return jsonify({"status": "error", "message": "拒絕存取：尚未登入系統。"}), 401
@@ -429,11 +440,9 @@ def update_member_status(mem_id):
         data = request.get_json()
         new_status = data.get('mem_status')
 
-        # 防呆驗證
         if not new_status:
             return jsonify({"status": "error", "message": "缺少必要參數 mem_status。"}), 400
         
-        # 嚴格對齊 DDL 的 CHECK 約束格式 (normal, abnormal, treating, dead, suspended)
         valid_statuses = ['normal', 'abnormal', 'treating', 'dead', 'suspended']
         if new_status not in valid_statuses:
             return jsonify({"status": "error", "message": f"不合法的精神狀態值。允許範圍: {valid_statuses}"}), 400
@@ -441,7 +450,10 @@ def update_member_status(mem_id):
         conn = get_db_connection()
         try:
             with conn.cursor() as cursor:
-                # 執行狀態固化更新
+                # ☣️ 熔斷安全檢查：遭遇認知危害者，其指令不被信任，不可修改任何人的心理狀態
+                if not check_operative_sanity(cursor, current_mem_id):
+                    return jsonify({"status": "error", "message": "403 Forbidden: 精神狀態異常特工無權修改或核准特工醫療狀態。"}), 403
+
                 sql = "UPDATE Member SET mem_status = %s WHERE memID = %s"
                 affected_rows = cursor.execute(sql, (new_status, mem_id))
                 conn.commit()
@@ -463,7 +475,7 @@ def update_member_status(mem_id):
         if 'conn' in locals(): conn.close()
 
 # =========================================================================
-# 🔒 【審查介面專用】動態修改 SCP 安全權限等級 (保留供其他模組單獨呼叫)
+# 🔒 【審查介面專用】動態修改 SCP 安全權限等級
 # =========================================================================
 @app.route('/api/scp/update_clearance', methods=['PUT'])
 def update_scp_clearance():
@@ -490,7 +502,7 @@ def update_scp_clearance():
                 conn.commit()
 
                 if affected_rows == 0:
-                    return jsonify({"status": "warning", "message": "未發現變更（可能新舊等級相同，或查無此 SCPID）。"}), 200
+                    return jsonify({"status": "warning", "message": "未發現變更（可能新舊等級相同，或查過無此 SCPID）。"}), 200
                 
                 print(f"🚨 [權限變更] 特工 {current_mem_id} 已將項目 {scp_id} 的權限修改為 Level {new_lv}")
                 return jsonify({"status": "success", "message": f"SCP-{scp_id} 權限已成功更新為 Level {new_lv}。"}), 200
