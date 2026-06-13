@@ -6,53 +6,36 @@ from datetime import datetime
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from dotenv import load_dotenv
+import traceback
 
-app = Flask(__name__,static_folder='../frontend',      #讓 Flask 找不到路由時去這裡找 CSS/JS 
-            static_url_path='')
+load_dotenv()
+
+app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
 # =========================================================================
-# 🔬 [DEBUG PROGRAM] 全域請求監聽器
+# ✅ 【核心優化】全域打通 CORS 預檢與 Session Cookie 共享（免去手動寫 OPTIONS）
 # =========================================================================
-@app.before_request
-def debug_cookie_traffic():
-    # 只監聽我們的 API 路徑
-    if request.path.startswith('/api/'):
-        print("\n" + "📡 " + "="*70)
-        print(f"【流量診斷】收到請求: {request.method} -> {request.path}")
-        print(f"[*] 瀏覽器送過來的原始 Cookie 字串: {request.headers.get('Cookie')}")
-        print(f"[*] Flask 解析後的 Cookies 字典: {dict(request.cookies)}")
-        print(f"[*] 目前伺服器記憶體中的 Session 內容: {dict(session)}")
-        print(f"[*] 是否持有有效特工身分 (memID): {session.get('memID')}")
-        print("="*75 + "\n")
-
-# 從環境變數動態抓取金鑰保護 Session
 app.secret_key = os.getenv('EXTERNAL_API_KEY', os.urandom(24).hex())
-
-# =========================================================================
-# ✅ 【核心修正】強行打通跨網域（CORS）下的 Session Cookie 傳遞
-# =========================================================================
 app.config.update(
-    SESSION_COOKIE_SAMESITE='Lax',  # 允許跨網域傳輸 Cookie
-    SESSION_COOKIE_SECURE=False,     # localhost 環境下允許不使用 HTTPS 傳輸
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=False,  # localhost 開發環境允許 HTTP 傳輸
     SESSION_REFRESH_EACH_REQUEST=True
 )
 
-# 載入環境變數（隱形斗篷）
-load_dotenv()
+# 💡 一行全域託管：允許跨域攜帶憑證，免除在各 API 內手動添加 Access-Control 標頭
+CORS(app, supports_credentials=True, origins=["http://localhost", "http://127.0.0.1"])
 
-CORS(app)  # 啟用 CORS，允許前端跨域請求
+# 📡 全域請求監聽器 (流量診斷)
+@app.before_request
+def debug_cookie_traffic():
+    if request.path.startswith('/api/'):
+        print("\n📡 " + "="*70)
+        print(f"【流量診斷】收到請求: {request.method} -> {request.path}")
+        print(f"[*] 伺服器記憶體中的 Session 內容: {dict(session)}")
+        print(f"[*] 是否持有有效特工身分 (memID): {session.get('memID')}")
+        print("="*75 + "\n")
 
-# 讓根目錄直接回傳 index.html 登入畫面
-@app.route('/')
-def index():
-    return app.send_static_file('index.html')
-
-# 讓 /dashboard.html 指向主控制台
-@app.route('/dashboard.html')
-def dashboard():
-    return app.send_static_file('dashboard.html')
-
-# 建立資料庫連線的 Helper Function（確保每次請求都能穩定連線）
+# 建立資料庫連線的 Helper Function
 def get_db_connection():
     return pymysql.connect(
         host=os.getenv('SERVERNAME'),
@@ -60,265 +43,129 @@ def get_db_connection():
         password=os.getenv('PASSWORD'),
         database=os.getenv('DBNAME'),
         charset='utf8mb4',
-        cursorclass=pymysql.cursors.DictCursor  # 讓撈出來的資料自動變 Dict，如：user['clearance_lv']
+        cursorclass=pymysql.cursors.DictCursor
     )
 
+# 靜態路由導向
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
+
+@app.route('/dashboard.html')
+def dashboard():
+    return app.send_static_file('dashboard.html')
+
 # ==========================================
-# 【核心驗證 API】/api/login
+# 【API 1】特工身分驗證 /api/login
 # ==========================================
-# =========================================================================
-# 🔬 [DEBUG LOGIN] 全斷點雷達追蹤版 API
-# =========================================================================
-@app.route('/api/login', methods=['POST', 'OPTIONS'])
+@app.route('/api/login', methods=['POST'])
 def login():
     print("\n🔑 " + "="*60)
     print("【雷達追蹤】收到 /api/login 請求！")
-    print(f"[*] 請求 Method: {request.method}")
-    print(f"[*] 請求 Headers:\n{request.headers}")
-    print(f"[*] 請求夾帶的原始 Cookies: {request.cookies}")
-
-    # 斷點 1：處理 OPTIONS 預檢
-    if request.method == 'OPTIONS':
-        print("[📍 斷點 1] 正在響應瀏覽器的 OPTIONS 預檢...")
-        response = jsonify({"status": "success"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        print("="*60 + "\n")
-        return response, 200
-
+    
     try:
-        # 斷點 2：解析 JSON
         data = request.get_json()
-        print(f"[📍 斷點 2] 成功解析前端傳來的 JSON 數據: {data}")
-        
         username = data.get('username') if data else None
         password_plain = data.get('password').strip() if data and data.get('password') else ""
 
         if not username or not password_plain:
-            print("[X] 攔截：前端傳入的帳號或密碼為空值！")
-            response = jsonify({"message": "欄位不可為空"})
-            response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-            return response, 400
+            return jsonify({"message": "欄位不可為空"}), 400
 
-        # 斷點 3：向學校資料庫要人
-        print(f"[📍 斷點 3] 正在向學校 MySQL 查詢特工代號: {username} ...")
-        connection = get_db_connection()
-        with connection.cursor() as cursor:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
             sql = "SELECT memID, password_hash, clearance_lv FROM Member WHERE memID = %s"
             cursor.execute(sql, (username,))
             user = cursor.fetchone()
-        
-        print(f"[*] 資料庫回傳原始紀錄: {user}")
 
         if not user:
-            print("[X] 驗證失敗：資料庫裡根本沒有這個 memID！")
-            response = jsonify({"message": "權限驗證失敗（帳號或密碼錯誤）"})
-            response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-            return response, 401
+            print("[X] 驗證失敗：資料庫裡無此 memID！")
+            return jsonify({"message": "權限驗證失敗（帳號或密碼錯誤）"}), 401
 
-        # 斷點 4：Bcrypt 密碼大驗兵
-        print(f"[📍 斷點 4] 開始進行 Bcrypt 雜湊密碼比對...")
-        print(f"    -> 明文密碼長度: {len(password_plain)}")
-        print(f"    -> 資料庫雜湊值: {user.get('password_hash')}")
-        
+        # Bcrypt 密碼大驗兵
         is_valid = bcrypt.checkpw(
             password_plain.encode('utf-8'), 
             user['password_hash'].encode('utf-8')
         )
-        print(f"[*] Bcrypt 比對最終結果 (is_valid): {is_valid}")
 
         if is_valid:
-            # 斷點 5：寫入 Session
             session['memID'] = user['memID'] 
-            print(f"[📍 斷點 5] 密碼正確！已成功將 memID={session['memID']} 寫入 Flask Session 記憶體。")
-
-            response = jsonify({
+            print(f"[📍] 密碼正確！已寫入 Session 記憶體: memID={session['memID']}")
+            return jsonify({
                 "message": "登入成功，歡迎回到站點",
                 "clearance_lv": user['clearance_lv'],
                 "redirect": "dashboard.html"
-            })
-            response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-            response.headers.add("Access-Control-Allow-Credentials", "true")
-            print("🎉 【登入流程完美通關】成功發送 Set-Cookie 響應！")
-            print("="*60 + "\n")
-            return response, 200
+            }), 200
         else:
-            print("[X] 驗證失敗：密碼錯誤（與資料庫雜湊值對不起來）")
-            response = jsonify({"message": "權限驗證失敗（帳號或密碼錯誤）"})
-            response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-            return response, 401
+            return jsonify({"message": "權限驗證失敗（帳號或密碼錯誤）"}), 401
 
     except Exception as e:
-        print(f"[🔥 崩潰] 登入 API 內部發生非預期嚴重錯誤！")
-        import traceback
-        traceback.print_exc() # 印出最詳細的報錯行數
-        response = jsonify({"message": f"【後端崩潰原因】: {str(e)}"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        return response, 500
+        traceback.print_exc()
+        return jsonify({"message": f"【後端崩潰】: {str(e)}"}), 500
     finally:
-        if 'connection' in locals():
-            connection.close()
-# ========================================
-# 工作 3-2 實作：API - 「研究報告上傳」
+        if 'conn' in locals(): conn.close()
+
 # ==========================================
-@app.route('/api/reports/upload', methods=['POST', 'OPTIONS'])
+# 【API 2】研究報告上傳 /api/reports/upload
+# ==========================================
+@app.route('/api/reports/upload', methods=['POST'])
 def upload_report():
-    print("\n📝 " + "="*60)
-    print("【雷達追蹤】收到 /api/reports/upload 報告提交請求！")
-    print(f"[*] 請求 Method: {request.method}")
-    print(f"[*] 請求 Headers:\n{request.headers}")
-    print(f"[*] 請求夾帶的原始 Cookies: {request.cookies}")
-    print(f"[*] 伺服器記憶體中的 Session 內容: {dict(session)}")
-
-    # 🔌 1. 先處理瀏覽器的 CORS 預檢請求 (Preflight)
-    if request.method == 'OPTIONS':
-        print("[📍 斷點 1] 正在響應瀏覽器的 OPTIONS 預檢...")
-        response = jsonify({"status": "success"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        print("="*60 + "\n")
-        return response, 200
-    
-    # 2. 檢查特工身分
     current_mem_id = session.get('memID') 
-    print(f"[📍 斷點 2] 從 Session 中解密出的特工身分 (memID): {current_mem_id}")
-    
     if not current_mem_id:
-        print("[X] 攔截：Session 內無 memID，判定為非法存取（401）！")
-        response = jsonify({
-            "status": "error",
-            "message": "拒絕存取：尚未登入基金會系統，無法提交研究報告。"
-        })
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        print("="*60 + "\n")
-        return response, 401
+        return jsonify({"status": "error", "message": "拒絕存取：尚未登入基金會系統。"}), 401
 
-    # 3. 測試時間模組是否正常
-    try:
-        auto_report_id = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f"[*] 成功生成系統時間戳記 reportID: {auto_report_id}")
-    except NameError:
-        print("[🔥 錯誤] 程式碼頂部可能漏寫了 `from datetime import datetime`！")
-        response = jsonify({"status": "error", "message": "後端 datetime 模組未導入"})
-        return response, 500
+    auto_report_id = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     try:
         data = request.get_json()
-        print(f"[📍 斷點 3] 成功解析前端傳來的 JSON Payload:\n{data}")
-        
-        title        = data.get('title')       
-        scp_id       = data.get('scpID')       
-        abilities    = data.get('abilities')   
-        weakness     = data.get('weakness')    
-        appearance   = data.get('appearance')  
-        others       = data.get('others')      
-        required_lv  = data.get('required_lv', '1')  
+        title = data.get('title')       
+        scp_id = data.get('scpID')       
+        abilities = data.get('abilities')   
+        weakness = data.get('weakness')    
+        appearance = data.get('appearance')  
+        others = data.get('others')      
+        required_lv = data.get('required_lv', '1')  
         involved_members = data.get('involved_members', [])
 
         if not title or not scp_id:
-            print("[X] 攔截：欄位閹割！標題或 SCP 代號為空（400）。")
-            response = jsonify({
-                "status": "error", 
-                "message": "提交失敗：報告標題與涉及的 SCP 代號為必填項目。"
-            })
-            response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-            return response, 400
+            return jsonify({"status": "error", "message": "提交失敗：標題與 SCP 代號為必填。"}), 400
         
-        print("[📍 斷點 4] 啟動資料庫寫入事務 (Database Transaction)...")
         conn = get_db_connection()
         with conn.cursor() as cursor:
-            # 1. 將報告核心內容寫入主表 Report
-            print("    -> [SQL 1/3] 正在將核心數據打入 Report 表...")
+            # 1. 寫入主表 Report
             sql_report = """
                 INSERT INTO Report (reportID, required_lv, title, appearance, abilities, weakness, others, scpID)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(sql_report, (
-                auto_report_id, required_lv, title, 
-                appearance, abilities, weakness, others, scp_id
-            ))
+            cursor.execute(sql_report, (auto_report_id, required_lv, title, appearance, abilities, weakness, others, scp_id))
 
-            # 2. 同步寫入多對多關係表 involved_mem (自動綁定填表人為 leader)
-            print(f"    -> [SQL 2/3] 正在將填表人 {current_mem_id} 以 'leader' 身分綁定至關係表...")
-            sql_relation = """
-                INSERT INTO involved_mem (reportID, memID, role)
-                VALUES (%s, %s, 'leader')
-            """
+            # 2. 同步寫入多對多關係表 (填表人為 leader)
+            sql_relation = "INSERT INTO involved_mem (reportID, memID, role) VALUES (%s, %s, 'leader')"
             cursor.execute(sql_relation, (auto_report_id, current_mem_id))
 
-            # 3. 遍歷涉及成員陣列
-            print("    -> [SQL 3/3] 開始遍歷寫入共同參與的特工群...")
+            # 3. 寫入共同參與特工
             for mem_id in involved_members:
-                if mem_id == current_mem_id:
-                    print(f"       [*] 偵測到填表人自己 ({mem_id})，自動跳過防重複寫入。")
-                    continue
-                    
-                print(f"       [*] 寫入涉及成員身分: {mem_id}")
-                sql_member = """
-                    INSERT INTO involved_mem (reportID, memID, role)
-                    VALUES (%s, %s, 'involved_member')
-                """
+                if mem_id == current_mem_id: continue
+                sql_member = "INSERT INTO involved_mem (reportID, memID, role) VALUES (%s, %s, 'involved_member')"
                 cursor.execute(sql_member, (auto_report_id, mem_id))
 
-            # 提交 Transaction，確保兩張表資料完整性
-            print("[📍 斷點 5] 正在發送最後的 conn.commit() 指令...")
             conn.commit()
-            print("🎉 【資料庫事務順利閉環】報告已成功固化至 MySQL 中！")
-
-        response = jsonify({
-            "status": "success",
-            "message": "研究報告已成功提交，系統已自動生成 reportID 並記錄填表人與時間。"
-        })
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        print("="*60 + "\n")
-        return response, 200
+            return jsonify({"status": "success", "message": "研究報告已成功提交。"}), 200
 
     except pymysql.MySQLError as e:
-        print(f"[🔥 MySQL 嚴重崩潰] 事務失敗！觸發安全回滾機制 (Rollback)。原因：{e}")
-        import traceback
         traceback.print_exc()
-        if 'conn' in locals():
-            conn.rollback()
-
-        response = jsonify({
-            "status": "error",
-            "message": f"資料庫寫入失敗：{str(e)}"
-        })
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        print("="*60 + "\n")
-        return response, 500
-    
+        if 'conn' in locals(): conn.rollback()
+        return jsonify({"status": "error", "message": f"資料庫寫入失敗：{str(e)}"}), 500
     finally:
-        if 'conn' in locals() and conn.open:
-            conn.close()
+        if 'conn' in locals(): conn.close()
 
 # ==========================================
-# 工作 3-3 實作：API - 「SCP 字典基本資料搜尋」(黃家福)
+# 【API 3】SCP 字典基本資料搜尋 /api/scp/search
 # ==========================================
 @app.route('/api/scp/search', methods=['GET'])
 def search_scp():
-    print("\n🔍 " + "="*60)
-    print("【雷達追蹤】收到 /api/scp/search 查詢請求！")
-    print(f"[*] 前端傳過來的原始網址參數 (Args): {dict(request.args)}")
-    print(f"[*] 伺服器記憶體中的 Session 內容: {dict(session)}")
-
-    # 斷點 1：讀取權限
     url_lv = request.args.get('clearance_lv')
-    print(f"[📍 斷點 1] 從網址抓到的 clearance_lv 參數為: {url_lv} (型態: {type(url_lv)})")
-    
-    # 初始化權限
     user_clearance = int(url_lv) if (url_lv and url_lv.isdigit()) else 0
-    print(f"[*] 經轉換後的初始 user_clearance = {user_clearance}")
-
     current_mem_id = session.get('memID')
-    print(f"[*] 從 Session 嘗試讀取特工代號 (memID): {current_mem_id}")
 
     conn = get_db_connection()
     try:
@@ -326,14 +173,7 @@ def search_scp():
             if current_mem_id:
                 cursor.execute("SELECT clearance_lv FROM Member WHERE memID = %s", (current_mem_id,))
                 user = cursor.fetchone()
-                if user:
-                    user_clearance = int(user['clearance_lv'])
-                    print(f"[📍 斷點 2] 成功啟動 Session 覆蓋！資料庫查詢該特工真實等級為: LEVEL {user_clearance}")
-            else:
-                print("[!] 警告：Session 內無 memID，放棄資料庫權限覆蓋，維持初始等級。")
-
-            # 最終定案權限
-            print(f"💡 【決議】本輪查詢使用的特工判定權限 user_clearance = {user_clearance}")
+                if user: user_clearance = int(user['clearance_lv'])
 
             search_id = request.args.get('scpID')
             if search_id:
@@ -342,266 +182,135 @@ def search_scp():
                 cursor.execute("SELECT * FROM SCP")
             scps = cursor.fetchall()
 
-            # 斷點 3：逐筆資料比對監聽
-            print(f"\n[📍 斷點 3] 開始對 {len(scps)} 筆 SCP 進行動態情報遮蔽審查:")
+            # 動態情報遮蔽審查
             for scp in scps:
-                scp_id = scp['scpID']
-                scp_req_lv = int(scp['clearance_lv'])
-                
-                # 比對邏輯
-                if user_clearance < scp_req_lv:
-                    print(f"    ❌ 權限不足！ {user_clearance} < {scp_req_lv} -> 遮蔽 {scp_id}")
-                    scp['appearance'] = "[REDACTED]"
-                    scp['abilities']  = "[REDACTED]"
-                    scp['weakness']   = "[REDACTED]"
-                    scp['others']     = "[REDACTED]"
-                else:
-                    print(f"    ✅ 准予查閱！ {user_clearance} >= {scp_req_lv} -> 放行 {scp_id}")
+                if user_clearance < int(scp['clearance_lv']):
+                    scp['appearance'] = scp['abilities'] = scp['weakness'] = scp['others'] = "[REDACTED]"
             
-            print("="*60 + "\n")
-            response = jsonify(scps)
-            response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-            response.headers.add("Access-Control-Allow-Credentials", "true")
-            return response, 200
-
+            return jsonify(scps), 200
     except pymysql.MySQLError as e:
-        print(f"[🔥 錯誤] SQL 執行崩潰: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
-        if 'conn' in locals() and conn.open:
-            conn.close()
+        if 'conn' in locals(): conn.close()
 
 # ==========================================
-# 工作 3-3 實作：API - 「O5 專屬研究報告檢索」(黃家福)
+# 【API 4】O5 專屬研究報告檢索 /api/admin/reports
 # ==========================================
 @app.route('/api/admin/reports', methods=['GET'])
 def search_reports():
-    # session['memID'] = 'O5000001O5'
     current_mem_id = session.get('memID')
-    
     if not current_mem_id:
         return jsonify({"status": "error", "message": "拒絕存取：尚未登入"}), 401
 
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # 驗證 O5 權限 (等級必須為 3)
             cursor.execute("SELECT clearance_lv FROM Member WHERE memID = %s", (current_mem_id,))
             user = cursor.fetchone()
-            
             if not user or int(user['clearance_lv']) < 3:
-                return jsonify({"status": "error", "message": "403 Forbidden：此操作僅限 O5 議會成員"}), 403
+                return jsonify({"status": "error", "message": "403 Forbidden：此操作僅限 O5 議會"}), 403
             
-            # 撈取所有報告
             cursor.execute("SELECT * FROM Report ORDER BY reportID DESC")
-            reports = cursor.fetchall()
-            
-            return jsonify(reports), 200
-
+            return jsonify(cursor.fetchall()), 200
     except pymysql.MySQLError as e:
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
-        if 'conn' in locals() and conn.open:
-            conn.close()
+        if 'conn' in locals(): conn.close()
 
 # ==========================================
-# 工作 3-3 實作：API - 「O5 審查並統整至 SCP 字典」(黃家福)
+# 【API 5】O5 審查並統整至 SCP 字典 /api/O5/approve
 # ==========================================
-@app.route('/api/O5/approve', methods=['POST', 'OPTIONS'])
+@app.route('/api/O5/approve', methods=['POST'])
 def approve_report():
-    # 處理 CORS 預檢請求
-    if request.method == 'OPTIONS':
-        response = jsonify({"status": "success"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response, 200
-
     current_mem_id = session.get('memID')
-    
     if not current_mem_id:
         return jsonify({"status": "error", "message": "拒絕存取：尚未登入"}), 401
 
     data = request.get_json()
     report_id = data.get('reportID')
-
     if not report_id:
         return jsonify({"status": "error", "message": "缺少 reportID"}), 400
 
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # 1. 驗證 O5 權限
             cursor.execute("SELECT clearance_lv FROM Member WHERE memID = %s", (current_mem_id,))
             user = cursor.fetchone()
-            
             if not user or int(user['clearance_lv']) < 3:
-                return jsonify({"status": "error", "message": "403 Forbidden：此操作僅限 O5 議會成員"}), 403
+                return jsonify({"status": "error", "message": "403 Forbidden：此操作僅限 O5 議會"}), 403
 
-            # 2. 抓取報告的精華情報
             cursor.execute("SELECT appearance, abilities, weakness, others, scpID FROM Report WHERE reportID = %s", (report_id,))
             report = cursor.fetchone()
-
             if not report:
                 return jsonify({"status": "error", "message": "找不到該研究報告"}), 404
 
-            # 3. 執行 DML：將報告情報覆蓋/更新回官方 SCP 字典表中
             update_sql = """
-                UPDATE SCP 
-                SET appearance = %s, abilities = %s, weakness = %s, others = %s
-                WHERE scpID = %s
+                UPDATE SCP SET appearance = %s, abilities = %s, weakness = %s, others = %s WHERE scpID = %s
             """
-            cursor.execute(update_sql, (
-                report['appearance'], 
-                report['abilities'], 
-                report['weakness'], 
-                report['others'], 
-                report['scpID']
-            ))
-            
+            cursor.execute(update_sql, (report['appearance'], report['abilities'], report['weakness'], report['others'], report['scpID']))
             conn.commit()
-
-            response = jsonify({
-                "status": "success", 
-                "message": f"SCP 檔案更新成功！情報已整併至 {report['scpID']}。"
-            })
-            response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-            response.headers.add("Access-Control-Allow-Credentials", "true")
-            return response, 200
-
+            return jsonify({"status": "success", "message": f"SCP 情報已整併至 {report['scpID']}。"}), 200
     except pymysql.MySQLError as e:
-        if 'conn' in locals():
-            conn.rollback()
-        return jsonify({"status": "error", "message": f"資料庫更新失敗：{str(e)}"}), 500
+        if 'conn' in locals(): conn.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
     finally:
-        if 'conn' in locals() and conn.open:
-            conn.close()
+        if 'conn' in locals(): conn.close()
 
-# =========================================================================
-# 🚨 【收編合體版 API】/api/admin/sites
-# =========================================================================
-@app.route('/api/admin/sites', methods=['GET', 'OPTIONS'])
+# ==========================================
+# 【API 6】站點收容與監控 /api/admin/sites
+# ==========================================
+@app.route('/api/admin/sites', methods=['GET'])
 def get_admin_sites():
-    # 1. 處理瀏覽器的 CORS 預檢
-    if request.method == 'OPTIONS':
-        response = jsonify({"status": "success"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Methods", "GET, OPTIONS")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response, 200
-
-    # 2. 驗證特工身分（共享 app.py 的安全機制）
-    current_mem_id = session.get('memID')
-    if not current_mem_id:
-        response = jsonify({"status": "error", "message": "拒絕存取：尚未登入系統。"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response, 401
-
-    # 3. 連線資料庫（直接調用 app.py 既有的連線函式，拒絕重複造輪子）
-    connection = get_db_connection()
-    try:
-        with connection.cursor() as cursor:
-            # 💡 完美融入同學的 LEFT JOIN 邏輯，確保能查到 contained_in 裡面的 scpID
-            sql = """
-                SELECT siteID, scpID, site_status, door_status, structure 
-                FROM Site LEFT JOIN contained_in USING (siteID)
-            """
-            cursor.execute(sql)
-            site_data = cursor.fetchall()
-
-        response = jsonify(site_data)
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response, 200
-
-    except Exception as e:
-        response = jsonify({"status": "error", "message": f"資料庫查詢失敗: {str(e)}"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response, 500
-    finally:
-        if 'connection' in locals():
-            connection.close()
-
-# =========================================================================
-# 🔬 [DEBUG GATEWAY] /api/admin/members 超顯微鏡雷達偵錯版 API
-# =========================================================================
-@app.route('/api/admin/members', methods=['GET', 'POST', 'OPTIONS'])
-def admin_members_api_gateway():
-    
-    # 🔌 1. CORS 預檢偵測
-    if request.method == 'OPTIONS':
-        response = jsonify({"status": "success"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response, 200
-
-    # 📡 2. 啟動顯微鏡：強行攔截並列印本輪請求的切片數據
-    print("\n👥 " + "×"*60)
-    print(f"【成員網關核心偵錯】收到核心請求: {request.method} -> /api/admin/members")
-    print(f"[*] 瀏覽器標頭帶過來的原始 Cookie 內容: {request.headers.get('Cookie')}")
-    print(f"[*] Flask 本輪解析出的 Cookies 字典: {dict(request.cookies)}")
-    print(f"[*] 內部 Session 解密結果 (當前記憶體): {dict(session)}")
-    print(f"[*] 讀取到的特工身分 memID: {session.get('memID')}")
-    print("×"*65)
-
-    # 🔑 3. 安全 Session 哨兵校驗
     if not session.get('memID'):
-        print(f"[X] 攔截：本輪 {request.method} 請求身分驗證失敗！即將噴出 401。")
-        print("×"*60 + "\n")
-        response = jsonify({"error": "ACCESS DENIED: Session expired or invalid."})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response, 401
-
-    print(f"[O] 放行：身分驗證通過！特工 {session.get('memID')} 正在執行 {request.method} 操作。")
+        return jsonify({"status": "error", "message": "拒絕存取：尚未登入系統。"}), 401
 
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # 🔍 模組 A：名單讀取 (GET)
+            sql = "SELECT siteID, scpID, site_status, door_status, structure FROM Site LEFT JOIN contained_in USING (siteID)"
+            cursor.execute(sql)
+            return jsonify(cursor.fetchall()), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"資料庫查詢失敗: {str(e)}"}), 500
+    finally:
+        if 'conn' in locals(): conn.close()
+
+# ==========================================
+# 【API 7】特工管理網關 /api/admin/members
+# ==========================================
+@app.route('/api/admin/members', methods=['GET', 'POST'])
+def admin_members_api_gateway():
+    if not session.get('memID'):
+        return jsonify({"error": "ACCESS DENIED: Session expired or invalid."}), 401
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
             if request.method == 'GET':
-                cursor.execute("""
-                    SELECT memID, dept_name, clearance_lv, permission, mem_status 
-                    FROM Member
-                """)
-                members = cursor.fetchall()
-                response = jsonify(members)
+                cursor.execute("SELECT memID, dept_name, clearance_lv, permission, mem_status FROM Member")
+                return jsonify(cursor.fetchall()), 200
                 
-            # 💉 模組 B：處理全新特工數據寫入 (POST)
             elif request.method == 'POST':
                 data = request.get_json()
-                dept_name    = data.get('dept_name')
+                dept_name = data.get('dept_name', '').strip()
                 clearance_lv = data.get('clearance_lv')
-                permission   = data.get('permission')
-                mem_status   = data.get('mem_status', 'normal')
+                permission = data.get('permission', '').strip()
+                mem_status = data.get('mem_status', 'normal')
                 raw_password = data.get('password')
 
-                # Bcrypt 安全雜湊加密
+                if not dept_name or not raw_password or not permission:
+                    return jsonify({"error": "Fields cannot be empty"}), 400
+
                 password_hash = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-                # 自動計算序號
                 cursor.execute("SELECT COUNT(*) AS cnt FROM Member WHERE dept_name = %s", (dept_name,))
-                count = cursor.fetchone()['cnt']
-                next_num = count + 1
+                next_num = cursor.fetchone()['cnt'] + 1
 
-                # =====================================================================
-                # 👑 【O5 議會最高特權分支】依據部門特殊規格調整 ID 結構
-                # =====================================================================
+                # ID 生成邏輯
                 if dept_name.upper() == 'O5':
-                    # O5 專屬：2碼部門 + 6位流水號 + 2碼 O5 = 10碼
-                    # 範例：'O5' + '000001' + 'O5' = 'O5000001O5'
                     mem_id = f"{dept_name}{str(next_num).zfill(6)}O5"
                 else:
-                    # 一般特工：2碼部門 + 7位流水號 + 1碼編級 = 10碼
-                    # 範例：'RD' + '0000010' + 'B' = 'RD0000010B'
                     mem_id = f"{dept_name}{str(next_num).zfill(7)}{permission}"
-                # =====================================================================
 
                 cursor.execute("""
                     INSERT INTO Member (memID, dept_name, clearance_lv, permission, mem_status, password_hash)
@@ -609,24 +318,14 @@ def admin_members_api_gateway():
                 """, (mem_id, dept_name, clearance_lv, permission, mem_status, password_hash))
                 conn.commit()
 
-                print(f"🎉 成功將新特工 {mem_id} 自動計算並固化至 MySQL 完畢！")
-                response = jsonify({'message': '新增成功', 'memID': mem_id})
-
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        print("×"*60 + "\n")
-        return response, 200
+                print(f"🎉 成功將新特工 {mem_id} 固化至 MySQL 完畢！")
+                return jsonify({'message': '新增成功', 'memID': mem_id}), 200
 
     except Exception as e:
-        print(f"[🔥 內部崩潰] 執行失敗，原因: {e}")
-        response = jsonify({'error': str(e)})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        print("×"*60 + "\n")
-        return response, 500
+        return jsonify({'error': str(e)}), 500
     finally:
-        conn.close()
+        if 'conn' in locals(): conn.close()
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True) #每次你改 Code，後端就會自動同步，不用手動重啟 Docker！
+    app.run(host='0.0.0.0', port=5000, debug=True)
