@@ -56,8 +56,8 @@ CREATE TABLE if not exists Site (
 
 -- Report (研究報告) 實體表
 CREATE TABLE if not exists Report (
-    reportID DATETIME NOT NULL COMMENT '事件編號', 
-    required_lv CHAR(1) DEFAULT '1' COMMENT '查閱所需安保等級', 
+    reportID INT AUTO_INCREMENT NOT NULL COMMENT '報告流水編號', 
+    cmt_time DATETIME NOT NULL COMMENT '時間戳記', 
     title VARCHAR(100) NOT NULL COMMENT '報告標題', 
     appearance TEXT COMMENT '外型描述', 
     abilities TEXT COMMENT '特殊能力', 
@@ -72,12 +72,12 @@ CREATE TABLE if not exists Report (
 
 -- involved_mem (研究關係表) 
 CREATE TABLE if not exists involved_mem (
-    reportID DATETIME NOT NULL COMMENT '事件編號', 
-    memID VARCHAR(10) NOT NULL COMMENT '成員代號', 
-    role VARCHAR(20) NOT NULL COMMENT '身分角色', 
+    reportID INT NOT NULL COMMENT '事件編號', 
+    memID VARCHAR(10) NOT NULL COMMENT '成員代號',
+    role VARCHAR(20) NOT NULL COMMENT '身分角色',
     PRIMARY KEY (reportID, memID),
-    CONSTRAINT chk_member_role CHECK (role IN ('leader', 'involved_member')), 
-    FOREIGN KEY (reportID) REFERENCES Report(reportID) ON DELETE RESTRICT, 
+    CONSTRAINT chk_member_role CHECK (role IN ('leader', 'involved_member')),
+    FOREIGN KEY (reportID) REFERENCES Report(reportID) ON DELETE CASCADE, 
     FOREIGN KEY (memID) REFERENCES Member(memID) ON DELETE RESTRICT 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -99,7 +99,7 @@ create Trigger update_scp_status
 AFTER update on Site for each row
 BEGIN
     if new.door_status = TRUE and new.structure = 'Broken' then
-        update scp set scp_status = 'breached'
+        update SCP set scp_status = 'breached'
         where scpID in (select scpID from contained_in where siteID = new.siteID);
         delete from contained_in where siteID = new.siteID;
     end if;
@@ -122,4 +122,5 @@ BEGIN
     END IF;
 
 END //
+
 delimiter ;

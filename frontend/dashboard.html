@@ -63,9 +63,16 @@
 </head>
 <body class="dashboard-body">
 
+    <div id="lockdown-overlay" class="terminal-lockdown-overlay">
+        <div class="lockdown-box">
+            <div class="lockdown-title">⚠️ CLASSIFIED DATA TRANSACTION IN PROGRESS</div>
+            <div class="lockdown-sub">AUTHORITY IDENTIFIED // COMMITTING...</div>
+        </div>
+    </div>
+
     <header class="topbar">
         <div class="logo-area">
-            <span class="scp-logo">◎</span>
+            <img src="SCP_icon.png" alt="SCP_icon" width="50" height="50">
             <span class="brand-title">SCP DBMS - SECURE NETWORK</span>
         </div>
         
@@ -113,46 +120,141 @@
         </div>
 
         <div id="report-upload-section" class="tab-content">
-            <section class="report-form-wrapper">
+            
+            <section class="report-form-wrapper" id="subview-agent-upload" style="display: none;">
                 <h2>RESEARCH REPORT INJECTOR</h2>
-                <p class="form-tip">SECURITY WARNING: ALL SUBMISSIONS ARE LOGGED BY O5 COUNCIL. AUTHOR ID WILL BE AUTOMATICALLY LINKED VIA SESSION.</p>
+                <p class="form-tip">SECURITY WARNING: ALL SUBMISSIONS ARE CLASSIFIED AND LOGGED BY O5 COUNCIL.</p>
                 
                 <div class="form-grid">
                     <div class="form-group">
                         <label>REPORT TITLE (REQUIRED):</label>
-                        <input type="text" id="title" value="report_title" required>
+                        <input type="text" id="title" placeholder="e.g., [緊急] 發現變異種" required autocomplete="off">
                     </div>
                     <div class="form-group">
                         <label>TARGET SCP-ID (REQUIRED):</label>
-                        <input type="text" id="scpID" value="SCP-001" required>
+                        <input type="text" id="scpID" placeholder="e.g., SCP-233" required autocomplete="off">
                     </div>
                     <div class="form-group full-width">
-                        <label>ANOMALOUS ABILITIES:</label>
-                        <textarea id="abilities" rows="3"></textarea>
+                        <label>ANOMALOUS ABILITIES (ABL.):</label>
+                        <textarea id="abilities" rows="3" placeholder="Describe anomalous capabilities..."></textarea>
                     </div>
                     <div class="form-group full-width">
-                        <label>KNOWN WEAKNESSES:</label>
-                        <textarea id="weakness" rows="3"></textarea>
+                        <label>KNOWN WEAKNESSES (WEAK.):</label>
+                        <textarea id="weakness" rows="3" placeholder="Describe recorded weaknesses..."></textarea>
                     </div>
                     <div class="form-group full-width">
-                        <label>PHYSICAL APPEARANCE:</label>
-                        <textarea id="appearance" rows="3"></textarea>
+                        <label>PHYSICAL APPEARANCE (APP.):</label>
+                        <textarea id="appearance" rows="3" placeholder="Describe physical structures..."></textarea>
                     </div>
                     <div class="form-group full-width">
                         <label>ADDITIONAL LOGS / OTHERS:</label>
-                        <textarea id="others" rows="3"></textarea>
+                        <textarea id="others" rows="3" placeholder="Additional observations..."></textarea>
                     </div>
                     <div class="form-group full-width">
                         <label>INVOLVED PERSONNEL ID (Separate with comma):</label>
-                        <input type="text" id="involvedMembers" value="RD0000117C">
+                        <input type="text" id="involvedMembers" placeholder="e.g., RD0000010A, RD0000010B">
                     </div>
                 </div>
-
-                <button class="terminal-btn" id="btn-submit-report">EXECUTE MySQL DATA INJECTION</button>
-
-                <div class="terminal-log-box">
+                <button class="terminal-btn" id="btn-submit-report" style="margin-top: 1.5rem;">EXECUTE MySQL DATA INJECTION</button>
+                
+                <div class="terminal-log-box" style="margin-top: 1.5rem;">
                     <div class="log-header">TERMINAL INJECTOR LOG</div>
                     <pre id="responseLog">SYSTEM IDLE. AWAITING OPERATION...</pre>
+                </div>
+            </section>
+
+            <section class="report-form-wrapper" id="subview-o5-list" style="display: none;">
+                <h2>O5 COUNCIL - PENDING REPORT MATRIX</h2>
+                <p class="form-tip" id="o5-list-subtitle">AWAITING SECURE DATASTREAM CLASSIFICATION...</p>
+                
+                <section class="table-section" style="padding: 0; margin-top: 1.5rem;">
+                    <table class="scp-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: rgba(0, 188, 212, 0.15); color: #00bcd4;">
+                                <th style="padding: 10px; text-align: left;">TIMESTAMP / ID</th>
+                                <th style="padding: 10px; text-align: left;">TARGET SCP</th>
+                                <th style="padding: 10px; text-align: left;">REPORT TITLE</th>
+                                <th style="padding: 10px; text-align: center;">OPERATION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="o5-report-list-body">
+                        </tbody>
+                    </table>
+                </section>
+            </section>
+
+            <section id="subview-o5-detail-workspace" style="display: none; margin-top: 1.5rem;">
+                <button class="terminal-btn" id="btn-back-to-o5-list" style="margin-bottom: 1.5rem; padding: 6px 18px; font-family: monospace; letter-spacing: 1px;">< BACK TO LIST</button>
+                
+                <div style="display: flex; gap: 2rem; align-items: stretch;">
+                    
+                    <div style="flex: 1; background: rgba(0,0,0,0.5); padding: 1.5rem; border: 1px solid #333; border-radius: 4px; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                            <h2 style="color: #fff; margin: 0; font-family: monospace; letter-spacing: 1px;" id="view-official-scpid">SCP-XXX</h2>
+                            <span style="font-size: 11px; color: #888; font-family: monospace;">OFFICIAL REGISTRY</span>
+                        </div>
+                        
+                        <div style="flex-grow: 1;">
+                            <div style="margin-bottom: 1.2rem;">
+                                <span style="background: rgba(0, 188, 212, 0.2); color: #00bcd4; padding: 2px 8px; font-size: 11px; font-family: monospace; font-weight: bold; letter-spacing: 1px;">STAT.</span>
+                                <p style="margin: 0.5rem 0 0; color: #00e676; font-family: monospace; font-weight: bold;" id="view-official-status">SECURE</p>
+                            </div>
+                            
+                            <div style="margin-bottom: 1.2rem;">
+                                <span style="background: rgba(0, 188, 212, 0.2); color: #00bcd4; padding: 2px 8px; font-size: 11px; font-family: monospace; font-weight: bold; letter-spacing: 1px;">MODIFY CLEARANCE LEVEL:</span>
+                                <div id="view-official-clearance-container" style="margin-top: 0.5rem;">
+                                    </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 1.2rem;">
+                                <span style="background: rgba(0, 188, 212, 0.2); color: #00bcd4; padding: 2px 8px; font-size: 11px; font-family: monospace; font-weight: bold; letter-spacing: 1px;">APP.</span>
+                                <p style="margin: 0.5rem 0 0; line-height: 1.4; color: #e0e0e0;" id="view-official-app">-</p>
+                            </div>
+                            
+                            <div style="margin-bottom: 1.2rem;">
+                                <span style="background: rgba(0, 188, 212, 0.2); color: #00bcd4; padding: 2px 8px; font-size: 11px; font-family: monospace; font-weight: bold; letter-spacing: 1px;">ABL.</span>
+                                <p style="margin: 0.5rem 0 0; line-height: 1.4; color: #e0e0e0;" id="view-official-abl">-</p>
+                            </div>
+                            
+                            <div style="margin-bottom: 1.2rem;">
+                                <span style="background: rgba(0, 188, 212, 0.2); color: #00bcd4; padding: 2px 8px; font-size: 11px; font-family: monospace; font-weight: bold; letter-spacing: 1px;">WEAK.</span>
+                                <p style="margin: 0.5rem 0 0; line-height: 1.4; color: #e0e0e0;" id="view-official-weak">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="flex: 1; background: #0b6170; padding: 1.5rem; border: 1px solid #00bcd4; border-radius: 4px; box-shadow: 0 0 15px rgba(0, 188, 212, 0.2);">
+                        <div style="border-bottom: 1px solid rgba(0, 188, 212, 0.4); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
+                            <h3 style="color: #fff; margin: 0; letter-spacing: 3px; font-family: monospace;">REPORT REVIEW</h3>
+                            <p style="font-size: 11px; color: #a0e0e0; margin: 4px 0 0; font-family: monospace;" id="view-report-meta">TIMESTAMP: -</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.2rem;">
+                            <label style="font-size: 11px; color: #a0e0e0; font-family: monospace; font-weight: bold; display: block; margin-bottom: 4px;">TITLE:</label>
+                            <p style="background: #000; padding: 10px; margin: 0; color: #fff; font-weight: bold; border-left: 3px solid #ff9900;" id="view-report-title">-</p>
+                        </div>
+                        <div style="margin-bottom: 1.2rem;">
+                            <label style="font-size: 11px; color: #a0e0e0; font-family: monospace; font-weight: bold; display: block; margin-bottom: 4px;">SCPID:</label>
+                            <p style="background: #000; padding: 10px; margin: 0; color: #fff; font-family: monospace;" id="view-report-scpid">-</p>
+                        </div>
+                        <div style="margin-bottom: 1.2rem;">
+                            <label style="font-size: 11px; color: #a0e0e0; font-family: monospace; font-weight: bold; display: block; margin-bottom: 4px;">ABL.:</label>
+                            <p style="background: #000; padding: 10px; margin: 0; color: #fff; line-height: 1.4;" id="view-report-abl">-</p>
+                        </div>
+                        <div style="margin-bottom: 1.2rem;">
+                            <label style="font-size: 11px; color: #a0e0e0; font-family: monospace; font-weight: bold; display: block; margin-bottom: 4px;">WEAK.:</label>
+                            <p style="background: #000; padding: 10px; margin: 0; color: #fff; line-height: 1.4;" id="view-report-weak">-</p>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="font-size: 11px; color: #a0e0e0; font-family: monospace; font-weight: bold; display: block; margin-bottom: 4px;">APP.:</label>
+                            <p style="background: #000; padding: 10px; margin: 0; color: #fff; line-height: 1.4;" id="view-report-app">-</p>
+                        </div>
+
+                        <div style="display: flex; gap: 1.5rem; margin-top: 2rem;">
+                            <button class="terminal-btn" id="btn-o5-reject" style="flex: 1; background: #5a1111; border-color: #ff5252; color: #ff5252; font-weight: bold; height: 45px; letter-spacing: 1px;">REJECT</button>
+                            <button class="terminal-btn" id="btn-o5-save" style="flex: 1; background: #115a2e; border-color: #00e676; color: #00e676; font-weight: bold; height: 45px; letter-spacing: 1px;">MERGE</button>
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>
@@ -176,12 +278,16 @@
                 <p class="form-tip" id="member-subtitle">AWAITING CLASSIFIED AGENT DATASTREAM...</p>
                 
                 <section class="search-section" style="margin-bottom: 1.5rem; padding: 0;">
-                    <div class="search-box" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 1rem;">
-                        <div style="flex-grow: 1;">
-                            <label for="member-search">SEARCH FIELD OPERATIVE / DEPARTMENT:</label>
-                            <input type="text" id="member-search" placeholder="Enter Agent ID or Department..." autocomplete="off" spellcheck="false">
+                    <!-- 🟢 核心修正：將原本包在外面的 flex 樣式，精準套用到內層真正的 search-box 上 -->
+                    <div class="search-box" style="display: flex; align-items: center; width: 100%; gap: 1rem;">
+                        <!-- 🟢 核心修正：加上 style="flex: 1; display: flex; align-items: center; gap: 1rem;" 讓輸入框大盒子自動拉滿 -->
+                        <div style="flex: 1; display: flex; align-items: center; gap: 1rem;">
+                            <label for="member-search" style="white-space: nowrap;">SEARCH FIELD OPERATIVE / DEPARTMENT:</label>
+                            <!-- 🟢 核心修正：輸入框加上 style="flex: 1;" 讓它不管按鈕在不在，都絕對拉滿剩餘空間 -->
+                            <input type="text" id="member-search" placeholder="Enter Agent ID or Department..." autocomplete="off" spellcheck="false" style="flex: 1;">
                         </div>
-                        <button class="terminal-btn" id="btn-switch-to-add" style="margin-top: 23px; padding: 10px 20px; white-space: nowrap; height: 43px;">+ ADD PERSONNEL</button>
+                        <!-- 按鈕維持原樣，不影響 JS 的 remove() 物理銷毀 -->
+                        <button class="terminal-btn" id="btn-switch-to-add" style="margin-top: 0; padding: 10px 20px; white-space: nowrap; height: 43px; display: none;">+ ADD PERSONNEL</button>
                     </div>
                 </section>
 
@@ -243,7 +349,7 @@
                     </div>
                     <div class="form-group full-width">
                         <label>INITIAL ACCESS PASSWORD (REQUIRED):</label>
-                        <input type="password" id="add-password" placeholder="Enter temporary temporary security password...">
+                        <input type="password" id="add-password" placeholder="Enter temporary security password...">
                     </div>
                 </div>
 

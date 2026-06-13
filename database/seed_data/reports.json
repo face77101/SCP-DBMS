@@ -1,182 +1,202 @@
 [
   {
-    "reportID": "2026-06-03 12:56:54",
+    "cmt_time": "2026-06-03 12:56:54",
     "title": "發現漂浮能力",
     "appearance": null,
     "abilities": "興奮時會漂浮。",
     "weakness": null,
     "others": null,
-    "scpID": "SCP-007"
+    "scpID": "SCP-007",
+    "reportID": 1
   },
   {
-    "reportID": "2026-06-04 09:15:00",
+    "cmt_time": "2026-06-04 09:15:00",
     "title": "SCP-001 異常行為觀測紀錄",
     "appearance": "高大且散發微光的未知實體",
     "abilities": "能干擾周圍電子的運作",
     "weakness": "對磁場變化極度敏感",
     "others": "目前仍處於未收容狀態",
-    "scpID": "SCP-001"
+    "scpID": "SCP-001",
+    "reportID": 2
   },
   {
-    "reportID": "2026-06-04 10:30:22",
+    "cmt_time": "2026-06-04 10:30:22",
     "title": "SCP-002 接觸實驗傷亡報告",
     "appearance": "形似血肉組成之巨型腫塊",
     "abilities": "吸引周圍生物接近並將其同化",
     "weakness": "對高溫燃燒有短暫迴避反應",
     "others": "已有多名研究員在接觸過程中死亡",
-    "scpID": "SCP-002"
+    "scpID": "SCP-002",
+    "reportID": 3
   },
   {
-    "reportID": "2026-06-04 14:00:10",
+    "cmt_time": "2026-06-04 14:00:10",
     "title": "SCP-003 收容失效與擬態分析",
     "appearance": "無固定形態的黏稠膠狀物",
     "abilities": "可以模仿任何生物的外型，但氣味無法改變",
     "weakness": "極度怕熱，遇高溫會喪失行動力",
     "others": "突破收容中，高度危險",
-    "scpID": "SCP-003"
+    "scpID": "SCP-003",
+    "reportID": 4
   },
   {
-    "reportID": "2026-06-04 16:45:30",
+    "cmt_time": "2026-06-04 16:45:30",
     "title": "SCP-004 強酸分泌量測研究",
     "appearance": "甲殼類外骨骼生物",
     "abilities": "會分泌強酸性液體，能溶解大多數金屬",
     "weakness": "對強光有極度敏感反應，會立即停止行動",
     "others": "建議收容槽增設強光投射燈",
-    "scpID": "SCP-004"
+    "scpID": "SCP-004",
+    "reportID": 5
   },
   {
-    "reportID": "2026-06-05 01:20:00",
+    "cmt_time": "2026-06-05 01:20:00",
     "title": "SCP-005 電磁脈衝抑制實驗",
     "appearance": "黑影人形，沒有五官",
     "abilities": "可以模仿任何生物的外型，但氣味無法改變",
     "weakness": "暴露於電磁脈衝後會短暫失去意識",
     "others": "實驗證實 EMP 槍能有效壓制其行動",
-    "scpID": "SCP-005"
+    "scpID": "SCP-005",
+    "reportID": 6
   },
   {
-    "reportID": "2026-06-05 03:10:15",
+    "cmt_time": "2026-06-05 03:10:15",
     "title": "SCP-006 擬態氣味辨識報告",
     "appearance": "不詳",
     "abilities": "可以模仿任何生物的外型，但氣味無法改變",
     "weakness": "化學嗅覺探測器可輕易識破",
     "others": "目前處於自由活動狀態",
-    "scpID": "SCP-006"
+    "scpID": "SCP-006",
+    "reportID": 7
   },
   {
-    "reportID": "2026-06-05 08:00:00",
+    "cmt_time": "2026-06-05 08:00:00",
     "title": "SCP-008 鏡面特徵與溝通嘗試",
     "appearance": "外觀為一面普通鏡子，鑲有木製框架",
     "abilities": "可以模仿任何生物的外型，但氣味無法改變",
     "weakness": "將鏡面完全覆蓋即可中斷能力",
     "others": "在收容期間曾嘗試與研究員進行溝通",
-    "scpID": "SCP-008"
+    "scpID": "SCP-008",
+    "reportID": 8
   },
   {
-    "reportID": "2026-06-05 11:22:33",
+    "cmt_time": "2026-06-05 11:22:33",
     "title": "SCP-009 逃脫路徑與軌跡追蹤",
     "appearance": "透明不可見之霧狀物",
     "abilities": "可以模仿任何生物的外型，但氣味無法改變",
     "weakness": "對零下低溫產生排斥",
     "others": "需調派機動特遣隊前往重新收容",
-    "scpID": "SCP-009"
+    "scpID": "SCP-009",
+    "reportID": 9
   },
   {
-    "reportID": "2026-06-05 15:40:00",
+    "cmt_time": "2026-06-05 15:40:00",
     "title": "SCP-010 維護費用預算評估報告",
     "appearance": "外型為普通小學生，約10歲，穿著校服",
     "abilities": "未知心智干擾能力",
     "weakness": "無法在攝氏零度以下的環境中維持活性",
     "others": "目前收容費用每月約達上萬美元",
-    "scpID": "SCP-010"
+    "scpID": "SCP-010",
+    "reportID": 10
   },
   {
-    "reportID": "2026-06-05 19:12:05",
+    "cmt_time": "2026-06-05 19:12:05",
     "title": "SCP-011 三人觀察定律驗證",
     "appearance": "石雕人像",
     "abilities": "會分泌強酸性液體，能溶解大多數金屬",
     "weakness": "在三人以上同時觀察時會停止所有異常行為",
     "others": "已安排閉路電視 24 小時保持多視角監控",
-    "scpID": "SCP-011"
+    "scpID": "SCP-011",
+    "reportID": 11
   },
   {
-    "reportID": "2026-06-06 00:05:59",
+    "cmt_time": "2026-06-06 00:05:59",
     "title": "SCP-012 突破收容應變紀錄",
     "appearance": "外型為半透明人形，身高約2公尺，無明顯五官",
     "abilities": "能穿透輕度物理屏障",
     "weakness": "暴露於電磁脈衝後會短暫失去意識",
     "others": "造成了 Site 門禁系統的暫時混亂",
-    "scpID": "SCP-012"
+    "scpID": "SCP-012",
+    "reportID": 12
   },
   {
-    "reportID": "2026-06-06 04:30:00",
+    "cmt_time": "2026-06-06 04:30:00",
     "title": "SCP-013 紅色盲區特性研究",
     "appearance": "巨大的節肢爬行動物",
     "abilities": "可以穿越任何固體牆壁，但無法穿越玻璃",
     "weakness": "無法辨識穿著紅色服裝的人員",
     "others": "所有常駐研究員已全面換發紅色防護服",
-    "scpID": "SCP-013"
+    "scpID": "SCP-013",
+    "reportID": 13
   },
   {
-    "reportID": "2026-06-06 08:15:22",
+    "cmt_time": "2026-06-06 08:15:22",
     "title": "SCP-015 飲食偏好與防禦機制",
     "appearance": "看似普通老人，穿著灰色西裝，頭髮全白",
     "abilities": "在未滿足飲食需求時產生強烈破壞力",
     "weakness": "無法在攝氏零度以下的環境中維持活性",
     "others": "定期需要提供特定食物，否則會進入攻擊狀態",
-    "scpID": "SCP-015"
+    "scpID": "SCP-015",
+    "reportID": 14
   },
   {
-    "reportID": "2026-06-06 10:00:00",
+    "cmt_time": "2026-06-06 10:00:00",
     "title": "SCP-016 牆壁穿透極限測試",
     "appearance": "外型為普通小學生，約10歲，穿著校服",
     "abilities": "可以穿越 any 固體牆壁，但無法穿越玻璃",
     "weakness": "無法在攝氏零度以下的環境中維持活性",
     "others": "測試證實 5 釐米厚之強化玻璃可完全封鎖其行動",
-    "scpID": "SCP-016"
+    "scpID": "SCP-016",
+    "reportID": 15
   },
   {
-    "reportID": "2026-06-06 13:50:45",
+    "cmt_time": "2026-06-06 13:50:45",
     "title": "SCP-018 時間暫停場域範圍測定",
     "appearance": "外型為普通小學生，約10歲，穿著校服",
     "abilities": "能夠暫時停止周圍10公尺內的時間流動",
     "weakness": "暫停時間上限約為 30 秒",
     "others": "場域邊緣的空間波動十分劇烈",
-    "scpID": "SCP-018"
+    "scpID": "SCP-018",
+    "reportID": 16
   },
   {
-    "reportID": "2026-06-06 17:11:00",
+    "cmt_time": "2026-06-06 17:11:00",
     "title": "SCP-020 記憶遺忘深度與後遺症",
     "appearance": "會發光的古老羊皮紙卷",
     "abilities": "能夠使接觸者遺忘過去24小時的記憶",
     "weakness": "對經過意志訓練之 A 級人員效果較弱",
     "others": "目前已知有三個個體存在",
-    "scpID": "SCP-020"
+    "scpID": "SCP-020",
+    "reportID": 17
   },
   {
-    "reportID": "2026-06-06 21:03:14",
+    "cmt_time": "2026-06-06 21:03:14",
     "title": "SCP-022 深度同化與致死率調查",
     "appearance": "菌絲狀地毯式蔓延實體",
     "abilities": "可以模仿任何生物的外型，但氣味無法改變",
     "weakness": "對強光有極度敏感反應，會立即停止行動",
     "others": "已有多名研究員在接觸過程中死亡",
-    "scpID": "SCP-022"
+    "scpID": "SCP-022",
+    "reportID": 18
   },
   {
-    "reportID": "2026-06-07 02:40:00",
+    "cmt_time": "2026-06-07 02:40:00",
     "title": "SCP-024 化學過敏源篩選實驗",
     "appearance": "不明機械裝置",
     "abilities": "釋放高頻率震盪干擾人腦",
     "weakness": "對特定化學物質產生強烈過敏反應並癱瘓",
     "others": "已調配特殊噴劑作為應變武器",
-    "scpID": "SCP-024"
+    "scpID": "SCP-024",
+    "reportID": 19
   },
   {
-    "reportID": "2026-06-07 06:15:30",
+    "cmt_time": "2026-06-07 06:15:30",
     "title": "SCP-025 黑色霧狀催眠能量檢測",
     "appearance": "無固定形態，通常呈現黑色霧狀",
     "abilities": "會對觀察者產生強烈的睡意，超過10分鐘目視會昏迷",
     "weakness": "配戴紅外線熱影像夜視鏡可免受催眠干擾",
     "others": "監控室已全面加裝防護濾鏡",
-    "scpID": "SCP-025"
+    "scpID": "SCP-025",
+    "reportID": 20
   }
 ]

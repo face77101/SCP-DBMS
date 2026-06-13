@@ -13,7 +13,7 @@ load_dotenv()
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
 # =========================================================================
-# ✅ 【核心優化】全域打通 CORS 預檢與 Session Cookie 共享（免去手動寫 OPTIONS）
+# ✅ 【核心優化】全域打通 CORS 預檢與 Session Cookie 共享
 # =========================================================================
 app.secret_key = os.getenv('EXTERNAL_API_KEY', os.urandom(24).hex())
 app.config.update(
@@ -22,7 +22,6 @@ app.config.update(
     SESSION_REFRESH_EACH_REQUEST=True
 )
 
-# 💡 一行全域託管：允許跨域攜帶憑證，免除在各 API 內手動添加 Access-Control 標頭
 CORS(app, supports_credentials=True, origins=["http://localhost", "http://127.0.0.1"])
 
 # 📡 全域請求監聽器 (流量診斷)
@@ -73,7 +72,7 @@ def login():
 
         conn = get_db_connection()
         with conn.cursor() as cursor:
-            sql = "SELECT memID, password_hash, clearance_lv FROM Member WHERE memID = %s"
+            sql = "SELECT memID, password_hash, clearance_lv, dept_name FROM Member WHERE memID = %s"
             cursor.execute(sql, (username,))
             user = cursor.fetchone()
 
@@ -81,7 +80,6 @@ def login():
             print("[X] 驗證失敗：資料庫裡無此 memID！")
             return jsonify({"message": "權限驗證失敗（帳號或密碼錯誤）"}), 401
 
-        # Bcrypt 密碼大驗兵
         is_valid = bcrypt.checkpw(
             password_plain.encode('utf-8'), 
             user['password_hash'].encode('utf-8')
@@ -89,10 +87,11 @@ def login():
 
         if is_valid:
             session['memID'] = user['memID'] 
-            print(f"[📍] 密碼正確！已寫入 Session 記憶體: memID={session['memID']}")
+            print(f"[📍] 密碼正確！已寫入 Session: memID={session['memID']}")
             return jsonify({
                 "message": "登入成功，歡迎回到站點",
                 "clearance_lv": user['clearance_lv'],
+                "dept_name": user['dept_name'],  
                 "redirect": "dashboard.html"
             }), 200
         else:
@@ -104,16 +103,16 @@ def login():
     finally:
         if 'conn' in locals(): conn.close()
 
-# ==========================================
-# 【API 2】研究報告上傳 /api/reports/upload
-# ==========================================
+# =========================================================================
+# 🟢 【核心正名對齊版】研究報告上傳 /api/reports/upload (100% 契合新 DDL)
+# =========================================================================
 @app.route('/api/reports/upload', methods=['POST'])
 def upload_report():
     current_mem_id = session.get('memID') 
     if not current_mem_id:
         return jsonify({"status": "error", "message": "拒絕存取：尚未登入基金會系統。"}), 401
 
-    auto_report_id = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     try:
         data = request.get_json()
@@ -123,37 +122,40 @@ def upload_report():
         weakness = data.get('weakness')    
         appearance = data.get('appearance')  
         others = data.get('others')      
-        required_lv = data.get('required_lv', '1')  
+        
         involved_members = data.get('involved_members', [])
+        involved_members = [m.strip() for m in involved_members if m and m.strip()]
 
         if not title or not scp_id:
             return jsonify({"status": "error", "message": "提交失敗：標題與 SCP 代號為必填。"}), 400
         
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            # 1. 寫入主表 Report
-            sql_report = """
-                INSERT INTO Report (reportID, required_lv, title, appearance, abilities, weakness, others, scpID)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(sql_report, (auto_report_id, required_lv, title, appearance, abilities, weakness, others, scp_id))
+        try:
+            with conn.cursor() as cursor:
+                sql_report = """
+                    INSERT INTO Report (cmt_time, title, appearance, abilities, weakness, others, scpID)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(sql_report, (now_str, title, appearance, abilities, weakness, others, scp_id))
 
-            # 2. 同步寫入多對多關係表 (填表人為 leader)
-            sql_relation = "INSERT INTO involved_mem (reportID, memID, role) VALUES (%s, %s, 'leader')"
-            cursor.execute(sql_relation, (auto_report_id, current_mem_id))
+                auto_report_id = cursor.lastrowid
 
-            # 3. 寫入共同參與特工
-            for mem_id in involved_members:
-                if mem_id == current_mem_id: continue
-                sql_member = "INSERT INTO involved_mem (reportID, memID, role) VALUES (%s, %s, 'involved_member')"
-                cursor.execute(sql_member, (auto_report_id, mem_id))
+                sql_relation = "INSERT INTO involved_mem (reportID, memID, role) VALUES (%s, %s, 'leader')"
+                cursor.execute(sql_relation, (auto_report_id, current_mem_id))
 
-            conn.commit()
-            return jsonify({"status": "success", "message": "研究報告已成功提交。"}), 200
+                for mem_id in involved_members:
+                    if mem_id == current_mem_id: continue
+                    sql_member = "INSERT INTO involved_mem (reportID, memID, role) VALUES (%s, %s, 'involved_member')"
+                    cursor.execute(sql_member, (auto_report_id, mem_id))
 
-    except pymysql.MySQLError as e:
+                conn.commit()
+                return jsonify({"status": "success", "message": "研究報告已成功提交。"}), 200
+        except Exception as sql_err:
+            if 'conn' in locals(): conn.rollback()
+            raise sql_err
+            
+    except Exception as e:
         traceback.print_exc()
-        if 'conn' in locals(): conn.rollback()
         return jsonify({"status": "error", "message": f"資料庫寫入失敗：{str(e)}"}), 500
     finally:
         if 'conn' in locals(): conn.close()
@@ -182,7 +184,6 @@ def search_scp():
                 cursor.execute("SELECT * FROM SCP")
             scps = cursor.fetchall()
 
-            # 動態情報遮蔽審查
             for scp in scps:
                 if user_clearance < int(scp['clearance_lv']):
                     scp['appearance'] = scp['abilities'] = scp['weakness'] = scp['others'] = "[REDACTED]"
@@ -211,17 +212,90 @@ def search_reports():
                 return jsonify({"status": "error", "message": "403 Forbidden：此操作僅限 O5 議會"}), 403
             
             cursor.execute("SELECT * FROM Report ORDER BY reportID DESC")
-            return jsonify(cursor.fetchall()), 200
+            reports = cursor.fetchall()
+            
+            for r in reports:
+                if isinstance(r.get('cmt_time'), datetime):
+                    r['cmt_time'] = r['cmt_time'].strftime('%Y-%m-%d %H:%M:%S')
+                    
+            return jsonify(reports), 200
     except pymysql.MySQLError as e:
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         if 'conn' in locals(): conn.close()
 
-# ==========================================
-# 【API 5】O5 審查並統整至 SCP 字典 /api/O5/approve
-# ==========================================
+# =========================================================================
+# 【API 5-A】O5 審查通過：情報動態追加版 (✨ 已整合動態權限等級固化)
+# =========================================================================
 @app.route('/api/O5/approve', methods=['POST'])
 def approve_report():
+    current_mem_id = session.get('memID')
+    print(f"🕵️ [O5 APPROVE] 當前 Session 特工 ID: {current_mem_id}")
+    
+    if not current_mem_id:
+        return jsonify({"status": "error", "message": "拒絕存取：尚未登入"}), 401
+
+    data = request.get_json()
+    report_id = data.get('reportID')
+    
+    # 🟢 核心修正：同步接收前端下拉表單傳遞過來的全新安保等級選值
+    frontend_clearance_lv = data.get('clearance_lv')
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT clearance_lv FROM Member WHERE memID = %s", (current_mem_id,))
+            user = cursor.fetchone()
+            
+            if not user or user.get('clearance_lv') is None or int(user['clearance_lv']) < 3:
+                return jsonify({"status": "error", "message": "403 Forbidden：權限不足或特工不存在"}), 403
+
+            cursor.execute("SELECT appearance, abilities, weakness, others, scpID FROM Report WHERE reportID = %s", (report_id,))
+            report = cursor.fetchone()
+            if not report:
+                return jsonify({"status": "error", "message": "找不到該研究報告"}), 404
+
+            # 💡 【高雅的 SQL 動態追加矩陣 + 權限等級同步更新】
+            # 在進行 CONCAT 串接新情報的同時，將 clearance_lv 的覆蓋更新一併納入。
+            # 如果前端有傳送變更的等級，則更新為新等級；若為 None 則維持原樣 (COALESCE(clearance_lv, '0'))
+            update_sql = """
+                UPDATE SCP SET 
+                    appearance = IF(LENGTH(COALESCE(appearance, '')) = 0, %s, CONCAT(appearance, ' / ', %s)),
+                    abilities  = IF(LENGTH(COALESCE(abilities, '')) = 0, %s, CONCAT(abilities, ' / ', %s)),
+                    weakness   = IF(LENGTH(COALESCE(weakness, '')) = 0, %s, CONCAT(weakness, ' / ', %s)),
+                    others     = IF(LENGTH(COALESCE(others, '')) = 0, %s, CONCAT(others, ' / ', %s)),
+                    clearance_lv = COALESCE(%s, clearance_lv)
+                WHERE scpID = %s
+            """
+            
+            print(f"👑 [O5 APPROVED] 項目 {report['scpID']} 的情報已成功合流，且安保等級鎖定為: LEVEL {frontend_clearance_lv}")
+            
+            cursor.execute(update_sql, (
+                report['appearance'], report['appearance'],
+                report['abilities'], report['abilities'],
+                report['weakness'], report['weakness'],
+                report['others'], report['others'],
+                frontend_clearance_lv, # 👈 正式灌入 O5 指定的最新安保等級
+                report['scpID']
+            ))
+            
+            # 【高雅 CASCADE 閉環】物理清洗 Report 主表
+            cursor.execute("DELETE FROM Report WHERE reportID = %s", (report_id,))
+            
+            conn.commit()
+            return jsonify({"status": "success", "message": "情報與權限等級整合成功。"}), 200
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        print(f"[🔥 審查崩潰] 原因: {e}") 
+        return jsonify({"status": "error", "message": f"後端內部錯誤: {str(e)}"}), 500
+    finally:
+        if 'conn' in locals(): conn.close()
+
+# =========================================================================
+# 🚨 【全新擴充 API 5-B】O5 審查不通過：駁回並銷毀報告
+# =========================================================================
+@app.route('/api/O5/reject', methods=['POST'])
+def reject_report():
     current_mem_id = session.get('memID')
     if not current_mem_id:
         return jsonify({"status": "error", "message": "拒絕存取：尚未登入"}), 401
@@ -237,19 +311,12 @@ def approve_report():
             cursor.execute("SELECT clearance_lv FROM Member WHERE memID = %s", (current_mem_id,))
             user = cursor.fetchone()
             if not user or int(user['clearance_lv']) < 3:
-                return jsonify({"status": "error", "message": "403 Forbidden：此操作僅限 O5 議會"}), 403
+                return jsonify({"status": "error", "message": "403 Forbidden"}), 403
 
-            cursor.execute("SELECT appearance, abilities, weakness, others, scpID FROM Report WHERE reportID = %s", (report_id,))
-            report = cursor.fetchone()
-            if not report:
-                return jsonify({"status": "error", "message": "找不到該研究報告"}), 404
-
-            update_sql = """
-                UPDATE SCP SET appearance = %s, abilities = %s, weakness = %s, others = %s WHERE scpID = %s
-            """
-            cursor.execute(update_sql, (report['appearance'], report['abilities'], report['weakness'], report['others'], report['scpID']))
+            cursor.execute("DELETE FROM Report WHERE reportID = %s", (report_id,))
             conn.commit()
-            return jsonify({"status": "success", "message": f"SCP 情報已整併至 {report['scpID']}。"}), 200
+            
+            return jsonify({"status": "success", "message": "報告已被 O5 議會駁回並物理銷毀。"}), 200
     except pymysql.MySQLError as e:
         if 'conn' in locals(): conn.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -275,22 +342,45 @@ def get_admin_sites():
     finally:
         if 'conn' in locals(): conn.close()
 
-# ==========================================
-# 【API 7】特工管理網關 /api/admin/members
-# ==========================================
+# =========================================================================
+# 【API 7】特工管理網關 /api/admin/members (🛡️ 安保級別動態情資隔離版)
+# =========================================================================
 @app.route('/api/admin/members', methods=['GET', 'POST'])
 def admin_members_api_gateway():
-    if not session.get('memID'):
+    current_mem_id = session.get('memID')
+    if not current_mem_id:
         return jsonify({"error": "ACCESS DENIED: Session expired or invalid."}), 401
 
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
             if request.method == 'GET':
-                cursor.execute("SELECT memID, dept_name, clearance_lv, permission, mem_status FROM Member")
-                return jsonify(cursor.fetchall()), 200
+                # 🛡️ Step 1. 先查出當前登入特工自己的安保層級
+                cursor.execute("SELECT clearance_lv FROM Member WHERE memID = %s", (current_mem_id,))
+                current_user = cursor.fetchone()
+                
+                # 如果找不到該特工，安全起見直接阻斷
+                if not current_user or current_user.get('clearance_lv') is None:
+                    return jsonify({"error": "ACCESS DENIED: Invalid operative registry."}), 403
+                
+                my_clearance = int(current_user['clearance_lv'])
+                print(f"🕵️ [MEMBER GUARD] 特工 {current_mem_id} (Level {my_clearance}) 正在請求成員名單...")
+
+                # 🛡️ Step 2. 動態過濾 SQL：只准查詢 clearance_lv 小於或等於自己的成員
+                # 這樣低階特工絕對無法向下撈取到高階長官（如 O5）的機密隱私
+                sql_filter = """
+                    SELECT memID, dept_name, clearance_lv, permission, mem_status 
+                    FROM Member 
+                    WHERE clearance_lv <= %s
+                    ORDER BY clearance_lv DESC, memID ASC
+                """
+                cursor.execute(sql_filter, (my_clearance,))
+                members_list = cursor.fetchall()
+                
+                return jsonify(members_list), 200
                 
             elif request.method == 'POST':
+                # (原本的 POST 新增特工邏輯完全保留)
                 data = request.get_json()
                 dept_name = data.get('dept_name', '').strip()
                 clearance_lv = data.get('clearance_lv')
@@ -306,7 +396,6 @@ def admin_members_api_gateway():
                 cursor.execute("SELECT COUNT(*) AS cnt FROM Member WHERE dept_name = %s", (dept_name,))
                 next_num = cursor.fetchone()['cnt'] + 1
 
-                # ID 生成邏輯
                 if dept_name.upper() == 'O5':
                     mem_id = f"{dept_name}{str(next_num).zfill(6)}O5"
                 else:
@@ -323,6 +412,95 @@ def admin_members_api_gateway():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if 'conn' in locals(): conn.close()
+
+    # =========================================================================
+# 🔒 【全新擴充 API 7-B】動態修改特工精神狀態 (修正前端 PATCH 405 錯位臭蟲)
+# =========================================================================
+@app.route('/api/admin/members/<mem_id>/status', methods=['PATCH'])
+def update_member_status(mem_id):
+    # 🛡️ 安全檢查：確保操作者有登入
+    current_mem_id = session.get('memID')
+    if not current_mem_id:
+        return jsonify({"status": "error", "message": "拒絕存取：尚未登入系統。"}), 401
+
+    try:
+        data = request.get_json()
+        new_status = data.get('mem_status')
+
+        # 防呆驗證
+        if not new_status:
+            return jsonify({"status": "error", "message": "缺少必要參數 mem_status。"}), 400
+        
+        # 嚴格對齊 DDL 的 CHECK 約束格式 (normal, abnormal, treating, dead, suspended)
+        valid_statuses = ['normal', 'abnormal', 'treating', 'dead', 'suspended']
+        if new_status not in valid_statuses:
+            return jsonify({"status": "error", "message": f"不合法的精神狀態值。允許範圍: {valid_statuses}"}), 400
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # 執行狀態固化更新
+                sql = "UPDATE Member SET mem_status = %s WHERE memID = %s"
+                affected_rows = cursor.execute(sql, (new_status, mem_id))
+                conn.commit()
+
+                if affected_rows == 0:
+                    return jsonify({"status": "warning", "message": "未發現變更（可能新舊狀態相同，或查無此特工 ID）。"}), 200
+                
+                print(f"🚨 [狀態調校] 特工 {current_mem_id} 已將人員 {mem_id} 的精神狀態同步修復為: {new_status.upper()}")
+                return jsonify({"status": "success", "message": f"特工 {mem_id} 精神狀態已更新為 {new_status}。"}), 200
+                
+        except Exception as sql_err:
+            if 'conn' in locals(): conn.rollback()
+            raise sql_err
+            
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"資料庫狀態更新失敗：{str(e)}"}), 500
+    finally:
+        if 'conn' in locals(): conn.close()
+
+# =========================================================================
+# 🔒 【審查介面專用】動態修改 SCP 安全權限等級 (保留供其他模組單獨呼叫)
+# =========================================================================
+@app.route('/api/scp/update_clearance', methods=['PUT'])
+def update_scp_clearance():
+    current_mem_id = session.get('memID')
+    if not current_mem_id:
+        return jsonify({"status": "error", "message": "拒絕存取：尚未登入系統。"}), 401
+
+    try:
+        data = request.get_json()
+        scp_id = data.get('scpID')
+        new_lv = data.get('clearance_lv')
+
+        if scp_id is None or new_lv is None:
+            return jsonify({"status": "error", "message": "缺少必要參數 scpID 或 clearance_lv。"}), 400
+        
+        if int(new_lv) not in [0, 1, 2, 3]:
+            return jsonify({"status": "error", "message": "不合法的安全等級 (必須為 0~3)。"}), 400
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                sql = "UPDATE SCP SET clearance_lv = %s WHERE scpID = %s"
+                affected_rows = cursor.execute(sql, (int(new_lv), scp_id))
+                conn.commit()
+
+                if affected_rows == 0:
+                    return jsonify({"status": "warning", "message": "未發現變更（可能新舊等級相同，或查無此 SCPID）。"}), 200
+                
+                print(f"🚨 [權限變更] 特工 {current_mem_id} 已將項目 {scp_id} 的權限修改為 Level {new_lv}")
+                return jsonify({"status": "success", "message": f"SCP-{scp_id} 權限已成功更新為 Level {new_lv}。"}), 200
+        except Exception as sql_err:
+            if 'conn' in locals(): conn.rollback()
+            raise sql_err
+            
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"資料庫更新失敗：{str(e)}"}), 500
     finally:
         if 'conn' in locals(): conn.close()
 

@@ -1,12 +1,14 @@
 /**
  * =========================================================================
- * 🛡️ SCP FOUNDATION SYSTEM CONTROL INTERFACE (REFACTORED)
+ * 🛡️ SCP FOUNDATION SYSTEM CONTROL INTERFACE (SECURITY OPTIMIZED)
  * =========================================================================
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     // 0. 身分驗證安保機制
     const clearanceLv = localStorage.getItem('clearance_lv');
+    const deptName = (localStorage.getItem('dept_name') || '').trim().toUpperCase(); // 💡 撈取部門標籤並強制大寫
+
     if (!clearanceLv) {
         alert("ACCESS DENIED: No clearance token found.");
         window.location.href = "index.html";
@@ -17,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================================
     // 🎯 【核心共用工具函式庫 (Helpers)】
     // ========================================================
+    const lockdownOverlay = document.getElementById('lockdown-overlay'); // 📢 全域阻斷遮罩錨點
+    const btnSwitchToAdd = document.getElementById('btn-switch-to-add');   // 📢 新增特工按鈕錨點
     
     // 🔌 統一 API 請求元件：自動引渡憑證與狀態碼攔截
     async function requestAPI(url, options = {}) {
@@ -50,30 +54,65 @@ document.addEventListener('DOMContentLoaded', () => {
         btnElement.textContent = isLoading ? loadingText : originalText;
     }
 
+    // 🛡️ 【安保隔離矩陣】高危人員編制按鈕審查網關
+    function enforceAddPersonnelSecurity() {
+        if (btnSwitchToAdd) {
+            // 👑 只有當前登入者的部門精準等於 'O5'，且安保等級達到 LEVEL 3 時，才獲准解鎖按鈕
+            if (deptName === 'O5' && parseInt(clearanceLv) >= 3) {
+                console.log("👑 [SECURITY AUDIT] O5 最高議會成員身分核實。解鎖特工編制按鈕。");
+                btnSwitchToAdd.style.display = 'block'; // 釋放按鈕現形
+            } else {
+                console.log("👤 [SECURITY AUDIT] 常規特工身分。沒收特工編制權限，從 DOM 物理移除按鈕實體。");
+                btnSwitchToAdd.remove(); // 物理銷毀節點，防範 F12 修改 CSS 繞過
+            }
+        }
+    }
+
     // ========================================================
     // 【功能一：🧭 Navbar 頁籤切換控制與全自動資料引渡】
     // ========================================================
     const navButtons = document.querySelectorAll('.nav-btn');
     const tabContents = document.querySelectorAll('.tab-content');
 
-    // 🗺️ 動態映射矩陣：當特定分頁被切換時，自動觸發對應的渲染函式
     const tabFetchRegistry = {
         'scp-view-section': () => fetchAndRenderSCPs(),
         'sites-section': () => fetchAndRenderSiteStatus(),
-        'members-section': () => fetchAndRenderMembers()
+        'members-section': () => fetchAndRenderMembers(),
+        'report-upload-section': () => dispatchReportTab() 
     };
+    
+    function dispatchReportTab() {
+        const agentUploadView = document.getElementById('subview-agent-upload');
+        const o5ListSubview = document.getElementById('subview-o5-list');
+        const o5DetailWorkspace = document.getElementById('subview-o5-detail-workspace');
+        const navBtn = document.querySelector('.nav-btn[data-target="report-upload-section"]');
+
+        console.log(`[AUTH WATCHDOG] 當前讀取到的特工部門標籤: "${deptName}"`);
+
+        if (deptName === 'O5') {
+            console.log("👑 [O5 IDENTIFIED] 成功偵測到最高議會權限，啟動雙階段審查矩陣。");
+            if (navBtn) navBtn.textContent = "REPORTS";
+            if (agentUploadView) agentUploadView.style.display = 'none';
+            if (o5ListSubview) o5ListSubview.style.display = 'block'; 
+            if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'none';
+            fetchAndRenderO5ReportList(); 
+        } else {
+            console.log("👤 [AGENT IDENTIFIED] 常規特工權限，開啟研究報告提交網關。");
+            if (navBtn) navBtn.textContent = "SUBMIT REPORT";
+            if (agentUploadView) agentUploadView.style.display = 'block';
+            if (o5ListSubview) o5ListSubview.style.display = 'none';
+            if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'none';
+        }
+    }
 
     navButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             navButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
             const targetId = btn.getAttribute('data-target');
             tabContents.forEach(content => {
                 content.classList.toggle('active', content.id === targetId);
             });
-
-            // 🔀 核心連動：如果切換的分頁有註冊在矩陣中，自動喚醒 Fetch
             if (tabFetchRegistry[targetId]) {
                 console.log(`[NAVIGATOR] 自動引渡分頁數據鏈: ${targetId}`);
                 tabFetchRegistry[targetId]();
@@ -89,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchAndRenderSCPs() {
         const currentClearance = localStorage.getItem('clearance_lv') || '0'; 
-
         if (scpAbortController) scpAbortController.abort();
         scpAbortController = new AbortController();
 
@@ -132,9 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 啟動 SCP 模糊搜尋
     bindLocalSearch('scp-search', '#scp-table-body tr', ['no-data-text', 'error-text']);
-    // 初始化首頁
     fetchAndRenderSCPs();
 
     // ========================================================
@@ -157,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 required_lv: "1"
             };
 
+            if (lockdownOverlay) lockdownOverlay.classList.add('active');
             setButtonLoading(btnSubmitReport, true, "⚡ TRANSMITTING ENCRYPTED DATA...");
             responseLog.textContent = "TRANSMITTING ENCRYPTED DATA PACKET TO BACKEND...";
 
@@ -168,12 +205,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 responseLog.textContent = "SUCCESSFULLY WRITTEN TO MYSQL DATABASE!\n\nRESPONSE:\n" + JSON.stringify(data, null, 2);
                 btnSubmitReport.textContent = "✔ INJECTION SUCCESS";
+                
+                alert("[安保憑證已核可] 研究報告已成功上傳至待審查核心。");
+                
                 setTimeout(() => setButtonLoading(btnSubmitReport, false, "", "EXECUTE MySQL DATA INJECTION"), 2000);
             } catch (err) {
                 setButtonLoading(btnSubmitReport, false, "", "EXECUTE MySQL DATA INJECTION");
                 responseLog.textContent = err.message.includes('401') 
                     ? "401 UNAUTHORIZED: SESSION EXPIRED OR INVALID CREDENTIALS."
                     : "CRITICAL CONTAMINATION ERROR:\n" + err;
+            } finally {
+                if (lockdownOverlay) lockdownOverlay.classList.remove('active');
             }
         });
     }
@@ -186,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchAndRenderSiteStatus() {
         if (!grid) return;
-
         try {
             const data = await requestAPI('http://localhost:5000/api/admin/sites');
             grid.innerHTML = ''; 
@@ -197,7 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 樓層拆分分組
             const floors = {};
             data.forEach(row => {
                 if (row && row.siteID) {
@@ -259,7 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchAndRenderMembers() {
         if (!memberTableBody) return;
-
         try {
             const data = await requestAPI('http://localhost:5000/api/admin/members');
             memberSubtitle.textContent = `AUTHORIZED ACCESS: DEPLOYED OPERATIVES IN FIELD = ${data.length}`;
@@ -294,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         } catch (err) {
-            memberErrorMsg.textContent = 'CRITICAL CORRUPTION: FAILED TO FETCH AGENT DIRECTORY. ' + err;
+            if (memberErrorMsg) memberErrorMsg.textContent = 'CRITICAL CORRUPTION: FAILED TO FETCH AGENT DIRECTORY. ' + err;
         }
     }
 
@@ -303,6 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalText = statusCell ? statusCell.textContent : 'normal';
         const originalColor = statusCell ? statusCell.style.color : '#00e676';
 
+        if (lockdownOverlay) lockdownOverlay.classList.add('active');
         if (selectElement) selectElement.disabled = true;
         if (statusCell) {
             statusCell.textContent = "⏳ CALIBRATING...";
@@ -321,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusCell.textContent = newStatus;
                     statusCell.style.color = newStatus === 'normal' ? '#00e676' : '#ff5252';
                 }
-                alert(`[SECURE COMPLIANCE] OPERATIVE ${memID} STATUS UPDATED TO: ${newStatus.toUpperCase()}`);
+                alert(`[資格已確認] 特工編號 ${memID} 之生命/精神狀態已被成功同步校準。`);
             }
         } catch (err) {
             alert('TRANSMISSION CONTAMINATION: ' + err.message);
@@ -330,6 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusCell.style.color = originalColor;
             }
         } finally {
+            if (lockdownOverlay) lockdownOverlay.classList.remove('active');
             if (selectElement) {
                 selectElement.value = ""; 
                 selectElement.disabled = false;
@@ -337,7 +378,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 啟動成員名單模糊搜尋
     bindLocalSearch('member-search', '#member-table-body tr');
 
     // ========================================================
@@ -345,7 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================================
     const memberListSubview = document.getElementById('member-list-subview');
     const memberAddSubview  = document.getElementById('member-add-subview');
-    const btnSwitchToAdd    = document.getElementById('btn-switch-to-add');
     const btnCancelAdd      = document.getElementById('btn-cancel-add');
     const btnExecuteAdd     = document.getElementById('btn-execute-add');
     const addMemberLog      = document.getElementById('add-member-log');
@@ -383,6 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            if (lockdownOverlay) lockdownOverlay.classList.add('active');
             setButtonLoading(btnExecuteAdd, true, "⚡ INJECTING DATASTREAM...");
             if (btnCancelAdd) btnCancelAdd.disabled = true;
             addMemberLog.textContent = "⚙️ INITIALIZING DATABASE INJECTION PROTOCOL...";
@@ -399,6 +439,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 addMemberLog.style.color = "#00e676";
                 btnExecuteAdd.textContent = "✔ INJECTION COMPLETED";
                 
+                alert(`[資格已確認] 新進人員數據結構已順利生成。識別代號：${data.memID}`);
+
                 document.getElementById('add-dept-name').value = '';
                 document.getElementById('add-password').value = '';
                 
@@ -414,7 +456,195 @@ document.addEventListener('DOMContentLoaded', () => {
                 addMemberLog.style.color = "#ff5252";
                 setButtonLoading(btnExecuteAdd, false, "", "EXECUTE REGISTRY INJECTION");
                 if (btnCancelAdd) btnCancelAdd.disabled = false;
+            } finally {
+                if (lockdownOverlay) lockdownOverlay.classList.remove('active');
             }
         });
     }
+
+    // =========================================================================
+    // 👑 【審查決策核心程序 - 核心固化】
+    // =========================================================================
+    const o5ListBody = document.getElementById('o5-report-list-body');
+    const o5ListSubview = document.getElementById('subview-o5-list');
+    const o5DetailWorkspace = document.getElementById('subview-o5-detail-workspace');
+    let activeReviewReportID = null; 
+
+    async function fetchAndRenderO5ReportList() {
+        if (!o5ListBody) return;
+        try {
+            const data = await requestAPI('http://localhost:5000/api/admin/reports');
+            const subtitleEl = document.getElementById('o5-list-subtitle');
+            if (subtitleEl) subtitleEl.textContent = `LEVEL 3 CLEARANCE GRANTED: PENDING FILES = ${data.length}`;
+            o5ListBody.innerHTML = '';
+
+            if (data.length === 0) {
+                o5ListBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #00e676; padding: 20px;">[CLEARED] 當前無任何待審查之數據封包。</td></tr>`;
+                return;
+            }
+
+            data.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding: 10px; border-bottom: 1px solid #333; font-family: monospace;">${r.reportID}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #333; font-weight: bold; color: #00bcd4;">${r.scpID}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #333;">${r.title}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #333; text-align: center;">
+                        <button class="terminal-btn btn-go-review" data-payload='${JSON.stringify(r)}' style="padding: 3px 10px; margin: 0;">VIEW DETAILS (審查)</button>
+                    </td>
+                `;
+                o5ListBody.appendChild(tr);
+            });
+
+            document.querySelectorAll('.btn-go-review').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const reportPayload = JSON.parse(e.target.getAttribute('data-payload'));
+                    openReviewWorkspace(reportPayload);
+                });
+            });
+        } catch (err) {
+            console.error('Fetch report list failed:', err);
+        }
+    }
+
+    async function openReviewWorkspace(report) {
+        activeReviewReportID = report.reportID;
+        document.getElementById('view-report-meta').textContent = `TIMESTAMP: ${report.reportID}`;
+        document.getElementById('view-report-title').textContent = report.title;
+        document.getElementById('view-report-scpid').textContent = report.scpID;
+        document.getElementById('view-report-abl').textContent = report.abilities || 'N/A';
+        document.getElementById('view-report-weak').textContent = report.weakness || 'N/A';
+        document.getElementById('view-report-app').textContent = report.appearance || 'N/A';
+
+        document.getElementById('view-official-scpid').textContent = report.scpID;
+        document.getElementById('view-official-status').textContent = "SEARCHING...";
+        document.getElementById('view-official-app').textContent = "LOADING...";
+        document.getElementById('view-official-abl').textContent = "LOADING...";
+        document.getElementById('view-official-weak').textContent = "LOADING...";
+
+        const clearanceContainer = document.getElementById('view-official-clearance-container');
+        if (o5ListSubview) o5ListSubview.style.display = 'none';
+        if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'block';
+
+        try {
+            const officialData = await requestAPI(`http://localhost:5000/api/scp/search?scpID=${report.scpID}`);
+            let currentLv = "0"; 
+
+            if (officialData && officialData.length > 0) {
+                const official = officialData[0];
+                currentLv = official.clearance_lv !== undefined ? String(official.clearance_lv) : "0";
+                document.getElementById('view-official-status').textContent = official.scp_status || 'SECURE';
+                document.getElementById('view-official-app').textContent = official.appearance || 'None recorded.';
+                document.getElementById('view-official-abl').textContent = official.abilities || 'None recorded.';
+                document.getElementById('view-official-weak').textContent = official.weakness || 'None recorded.';
+            } else {
+                document.getElementById('view-official-status').textContent = "NEW ANOMALY";
+                document.getElementById('view-official-app').textContent = "[未登錄全新項目]";
+                document.getElementById('view-official-abl').textContent = "[未登錄全新項目]";
+                document.getElementById('view-official-weak').textContent = "[未登錄全新項目]";
+            }
+
+            if (clearanceContainer) {
+                clearanceContainer.innerHTML = `
+                    <select id="update-scp-clearance-lv" style="padding: 5px; background: #111; color: #00bcd4; border: 1px solid #333; font-family: monospace;">
+                        <option value="0" ${currentLv === "0" ? "selected" : ""}>LEVEL 0 (Unrestricted)</option>
+                        <option value="1" ${currentLv === "1" ? "selected" : ""}>LEVEL 1 (Restricted)</option>
+                        <option value="2" ${currentLv === "2" ? "selected" : ""}>LEVEL 2 (Confidential)</option>
+                        <option value="3" ${currentLv === "3" ? "selected" : ""}>LEVEL 3 (Secret)</option>
+                    </select>
+                `;
+            }
+        } catch (err) {
+            console.error('Fetch official info failed:', err);
+        }
+    }
+
+    document.getElementById('btn-back-to-o5-list')?.addEventListener('click', () => {
+        if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'none';
+        if (o5ListSubview) o5ListSubview.style.display = 'block';
+        fetchAndRenderO5ReportList();
+    });
+
+    // =========================================================================
+    // 🕹️ 審查控制核心
+    // =========================================================================
+    const btnO5Save = document.getElementById('btn-o5-save');
+    const btnO5Reject = document.getElementById('btn-o5-reject');
+
+    btnO5Save?.addEventListener('click', async () => {
+        if (!activeReviewReportID) return;
+        if (lockdownOverlay) lockdownOverlay.classList.add('active');
+        
+        btnO5Save.disabled = true;
+        btnO5Save.textContent = "⚡ MERGING PACKETS...";
+        if (btnO5Reject) btnO5Reject.disabled = true;
+
+        try {
+            await requestAPI('http://localhost:5000/api/O5/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    reportID: activeReviewReportID,
+                    clearance_lv: document.getElementById('update-scp-clearance-lv')?.value || "0" 
+                })
+            });
+            
+            alert(`[資格已確認] 報告數據已成功與核心主字典完成串接整併。`);
+            
+            await fetchAndRenderO5ReportList();
+            if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'none';
+            if (o5ListSubview) o5ListSubview.style.display = 'block';
+            activeReviewReportID = null;
+        } catch (err) {
+            alert('審查授權失敗: ' + err.message);
+        } finally {
+            if (lockdownOverlay) lockdownOverlay.classList.remove('active');
+            if (btnO5Save) {
+                btnO5Save.disabled = false;
+                btnO5Save.textContent = "SAVE & MERGE (通過)";
+            }
+            if (btnO5Reject) btnO5Reject.disabled = false;
+        }
+    });
+
+    btnO5Reject?.addEventListener('click', async () => {
+        if (!activeReviewReportID) return;
+        if (!confirm('[WARNING] 確定要駁回並物理銷毀這篇研究報告嗎？此操作不可逆。')) return;
+        if (lockdownOverlay) lockdownOverlay.classList.add('active');
+        
+        btnO5Reject.disabled = true;
+        btnO5Reject.textContent = "🔥 ERASING LOGS...";
+        if (btnO5Save) btnO5Save.disabled = true;
+
+        try {
+            await requestAPI('http://localhost:5000/api/O5/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reportID: activeReviewReportID })
+            });
+            
+            alert(`[審查程序終止] 該報告封包已從暫存庫中完全物理銷毀。`);
+            
+            await fetchAndRenderO5ReportList();
+            if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'none';
+            if (o5ListSubview) o5ListSubview.style.display = 'block';
+            activeReviewReportID = null;
+        } catch (err) {
+            alert('駁回執行失敗: ' + err.message);
+        } finally {
+            if (lockdownOverlay) lockdownOverlay.classList.remove('active');
+            if (btnO5Reject) {
+                btnO5Reject.disabled = false;
+                btnO5Reject.textContent = "REJECT (駁回)";
+            }
+            if (btnO5Save) btnO5Save.disabled = false;
+        }
+    });
+
+    // =========================================================================
+    // 📢 【全域初始化同步錨點】
+    // =========================================================================
+    console.log('[SYSTEM READY] 正在執行全域權限與分流初始化連線...');
+    enforceAddPersonnelSecurity(); // 💡 初始化時立刻執行高危按鈕物理隔離審查
+    dispatchReportTab();
 });

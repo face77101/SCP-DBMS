@@ -418,3 +418,61 @@ button:disabled {
     pointer-events: none !important; /* 強制關閉點擊穿透 */
     opacity: 0.6 !important;
 }
+
+/* =========================================================================
+   🚨 【全站級收容失效鎖定】機密遮罩層 (Terminal Lockdown Overlay)
+   ========================================================================= */
+.terminal-lockdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.75); /* 🟢 75% 純黑半透明，完美暗掉全網頁 */
+    z-index: 99999;                       /* 🟢 最高安保權重，強行壓在 Navbar 與所有卡片最上方 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    cursor: wait !important;              /* 🟢 游標進入全螢幕範圍立刻強制變成等待圓圈 */
+    
+    /* 預設完全透明且不干擾點擊，只有被加上 .active 時才啟動鎖定 */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* 當啟動全量鎖定時 */
+.terminal-lockdown-overlay.active {
+    opacity: 1;
+    pointer-events: auto;                 /* 🟢 沒收全螢幕所有的滑鼠點擊事件 */
+}
+
+/* 遮罩中央的科技感動態日誌與小圖章 */
+.lockdown-box {
+    text-align: center;
+    font-family: 'Courier New', monospace;
+}
+
+.lockdown-title {
+    color: #ff5252;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 82, 82, 0.6);
+    animation: pulse-red 1.5s infinite;
+}
+
+.lockdown-sub {
+    color: #888;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+@keyframes pulse-red {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; text-shadow: 0 0 15px rgba(255, 82, 82, 0.9); }
+    100% { opacity: 0.6; }
+}
