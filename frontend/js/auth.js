@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.cursor = 'wait'; // 讓滑鼠游標變成漏斗/轉圈狀態
         loginCard.style.opacity = '0.7';     // 讓卡片微微變暗，提示正在通訊中
         
-        // 可選：在畫面上動態加入一個小小的終端機提示字眼
         let statusNotice = document.createElement('p');
         statusNotice.id = 'status-notice';
         statusNotice.innerText = 'CONNECTING TO SERVER...';
@@ -28,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.appendChild(statusNotice);
 
         try {
-            const response = await fetch('http://localhost:5000/api/login', {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
@@ -42,7 +41,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusNotice.innerText = 'ACCESS GRANTED. REDIRECTING...';
                 statusNotice.style.color = '#00ff00'; // 變綠色
                 
+                // =========================================================================
+                // 🟢 【最高安保權限修復】將後端回傳的關鍵憑證固化至瀏覽器快取中
+                // =========================================================================
                 localStorage.setItem('clearance_lv', data.clearance_lv);
+                localStorage.setItem('dept_name', data.dept_name); // ✨ 關鍵修復：將後端撈出來的 "O5" 寫入快取
+                localStorage.setItem('memID', username);           // 順便記錄當前登入的特工 ID
                 
                 // 延遲 1 秒再跳轉，讓特工看得到「成功放行」的科幻爽感
                 setTimeout(() => {
@@ -52,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // 【狀況 B：驗證失敗】
                 alert(data.message);
-                // 失敗了，解除鎖定，讓使用者可以重新輸入
                 unlockForm();
             }
 
@@ -73,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loginCard.style.opacity = '1';
             if (statusNotice) statusNotice.remove(); // 移除提示字
             
-            // 自動清空密碼欄位，並把焦點留給密碼，方便直接重新輸入
             passwordInput.value = '';
             passwordInput.focus();
         }

@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             responseLog.textContent = "TRANSMITTING ENCRYPTED DATA PACKET TO BACKEND...";
 
             try {
-                const data = await requestAPI('http://localhost:5000/api/reports/upload', {
+                const data = await requestAPI('/api/reports/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(reportData)
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!grid) return;
 
         try {
-            const data = await requestAPI('http://localhost:5000/api/admin/sites');
+            const data = await requestAPI('/api/admin/sites');
             grid.innerHTML = ''; 
             if (errorMsg) errorMsg.textContent = '';
 
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!memberTableBody) return;
 
         try {
-            const data = await requestAPI('http://localhost:5000/api/admin/members');
+            const data = await requestAPI('/api/admin/members');
             memberSubtitle.textContent = `AUTHORIZED ACCESS: DEPLOYED OPERATIVES IN FIELD = ${data.length}`;
             memberTableBody.innerHTML = '';
 
@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addMemberLog.style.color = "#ffc107";
 
             try {
-                const data = await requestAPI('http://localhost:5000/api/admin/members', {
+                const data = await requestAPI('/api/admin/members', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ dept_name, clearance_lv, permission, mem_status, password })
