@@ -516,6 +516,53 @@ def update_scp_clearance():
     finally:
         if 'conn' in locals(): conn.close()
 
+# =========================================================================
+# 🚨 【Bonus API】模擬外部系統對接 (模擬收容失效警報)
+# =========================================================================
+@app.route('/api/external/site_update', methods=['POST'])
+def external_site_update():
+    # 1. 驗證 API Key (模擬外部系統授權)
+    provided_key = request.headers.get('X-API-Key')
+    expected_key = os.getenv('EXTERNAL_API_KEY')
+    
+    if not expected_key:
+        return jsonify({"status": "error", "message": "伺服器未設定 EXTERNAL_API_KEY"}), 500
+
+    if provided_key != expected_key:
+        print(f"⚠️ [外部入侵攔截] 無效的 API Key 嘗試存取設施控制權！")
+        return jsonify({"status": "error", "message": "Unauthorized: Invalid API Key"}), 401
+
+    data = request.get_json()
+    site_id = data.get('siteID')
+    door_status = data.get('door_status')
+    structure = data.get('structure')
+
+    if not site_id or door_status is None or not structure:
+         return jsonify({"status": "error", "message": "缺少必要的設施狀態參數"}), 400
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 2. 執行 UPDATE 觸發 Trigger
+            sql = """
+                UPDATE Site 
+                SET door_status = %s, structure = %s 
+                WHERE siteID = %s
+            """
+            affected_rows = cursor.execute(sql, (door_status, structure, site_id))
+            conn.commit()
+            
+            if affected_rows == 0:
+                 return jsonify({"status": "warning", "message": f"未找到設施 {site_id} 或狀態未改變"}), 404
+
+            print(f"💥 [外部警報接收] 設施 {site_id} 狀態已更新。門禁: {door_status}, 結構: {structure}")
+            return jsonify({"status": "success", "message": f"設施 {site_id} 狀態更新完畢，已連動資料庫 Trigger。"}), 200
+
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+         if 'conn' in locals(): conn.close()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
