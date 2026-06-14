@@ -61,7 +61,8 @@ services:
     # 這樣 Nginx 才知道要去哪裡拿你的 index.html、style.css 傳給使用者。
     volumes:
       - ./frontend:/usr/share/nginx/html
-    
+      # 👈 補上這行！把我們寫好的轉發規則餵給 Nginx
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: always
     networks:
       - scp_foundation_network
