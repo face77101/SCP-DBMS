@@ -1,50 +1,87 @@
 /**
  * =========================================================================
- * 🛡️ SCP FOUNDATION SYSTEM CONTROL INTERFACE (SECURITY OPTIMIZED)
+ * 🛡️ SCP FOUNDATION SYSTEM CONTROL INTERFACE (SECURITY OPTIMIZED v2.1)
  * =========================================================================
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 0. 身分驗證安保機制
+    // ========================================================
+    // 👑 0. 【零信任前置防禦矩陣】身分驗證與精神狀態動態校準
+    // ========================================================
     const clearanceLv = localStorage.getItem('clearance_lv');
-    const deptName = (localStorage.getItem('dept_name') || '').trim().toUpperCase(); // 💡 撈取部門標籤並強制大寫
+    const deptName = (localStorage.getItem('dept_name') || '').trim().toUpperCase(); 
+    const permission = (localStorage.getItem('permission') || '').trim().toUpperCase();
 
+    // 💡 【核心洗滌】強制去除前後空格並轉為絕對小寫，完美防堵字串對齊陷阱
+    let memStatus = localStorage.getItem('mem_status');
+    memStatus = memStatus ? memStatus.trim().toLowerCase() : 'normal';
+
+    console.log(`📡 [安保系統掃描] 特工身分: ${deptName}_LV${clearanceLv}_${permission} // 當前精神指標: [${memStatus.toUpperCase()}]`);
+
+    // A. 基礎憑證審查：若完全沒有登入資料，直接踢回登入頁
     if (!clearanceLv) {
         alert("ACCESS DENIED: No clearance token found.");
         window.location.href = "index.html";
         return;
     }
-    document.getElementById('current-clearance').innerText = `CLEARANCE: LEVEL ${clearanceLv}`;
-    // 💡 請將此段加在 main.js 內，0.身分驗證安保機制的下方
-    const memStatus = localStorage.getItem('mem_status') || 'normal'; // 確保登入時有將狀態存入
 
-    if (memStatus === 'abnormal') {
-        const abnormalOverlay = document.getElementById('abnormal-overlay');
-        if (abnormalOverlay) {
-            abnormalOverlay.classList.add('active'); // 🟢 直接全螢幕暗紅鎖死，沒收全部操作！
-            console.error("☣️ [CRITICAL LOCKOUT] OPERATIVE STATUS IS ABNORMAL. TERMINAL DISCONNECTED.");
-            return; // 物理阻斷後面所有 API 的初始化加載
-        }
+    // B. 相容性動態拼裝：保留原本 ID 讓原本的按鈕控制不崩潰，外觀完美呈現特工編號
+    const currentClearanceSpan = document.getElementById('current-clearance');
+    if (currentClearanceSpan) {
+        currentClearanceSpan.innerText = `USER: ${deptName}_LV${clearanceLv}_${permission}`;
     }
 
+    // C. 🩺 【健康燈號與遮罩核心控制閉環】
+    const psychIndicator = document.getElementById('psych-status-indicator');
+    const abnormalOverlay = document.getElementById('abnormal-overlay');
+
+    // 🔴 狀況一：精神狀態明確異常 (abnormal) -> 物理鎖死
+    if (memStatus === 'abnormal') {
+        console.error("☣️ [CRITICAL LOCKOUT] OPERATIVE STATUS IS ABNORMAL. TERMINAL BLOCK PROTOCOL ACTIVATED.");
+        
+        if (psychIndicator) {
+            psychIndicator.classList.remove('status-green');
+            psychIndicator.classList.add('status-red'); // 點亮紅燈
+        }
+        if (abnormalOverlay) {
+            abnormalOverlay.style.display = 'flex'; // 強制顯現黑屏
+            abnormalOverlay.classList.add('active');
+        }
+        return; // ⚠️ 物理阻斷後面所有資料加載與事件綁定，但「不使用 throw」避免誤殺全域環境
+    } 
+    
+    // 🟢 狀況二：精神狀態完全正常 (normal) -> 安全放行
+    else {
+        console.log("🟢 [SECURITY AUDIT] SANITY CHECK PASSED. TERMINAL UNLOCKED.");
+        
+        if (psychIndicator) {
+            psychIndicator.classList.remove('status-red');
+            psychIndicator.classList.add('status-green'); // 點亮安全綠燈
+        }
+        if (abnormalOverlay) {
+            abnormalOverlay.style.display = 'none'; // ⚙️ 強制隱藏阻斷遮罩，確保正常人暢行無阻
+            abnormalOverlay.classList.remove('active');
+        }
+    }
+    
     // ========================================================
     // 🎯 【核心共用工具函式庫 (Helpers)】
     // ========================================================
-    const lockdownOverlay = document.getElementById('lockdown-overlay'); // 📢 全域阻斷遮罩錨點
-    const btnSwitchToAdd = document.getElementById('btn-switch-to-add');   // 📢 新增特工按鈕錨點
+    const lockdownOverlay = document.getElementById('lockdown-overlay'); 
+    const btnSwitchToAdd = document.getElementById('btn-switch-to-add');   
     
-    // 🔌 統一 API 請求元件：自動引渡憑證與狀態碼攔截（加入 403 強制鎖定矩陣）
+    // 🔌 統一 API 請求元件
     async function requestAPI(url, options = {}) {
         const defaultOptions = { credentials: 'include' };
         const response = await fetch(url, { ...defaultOptions, ...options });
         
-        // 💡 【核心優化】觸發 403 瞬間全螢幕封鎖
+        // 觸發 403 瞬間全螢幕封鎖
         if (response.status === 403) {
             console.error("🚨 [SECURITY BREACH] DETECTED 403 FORBIDDEN. INITIALIZING LOCKDOWN PROTOCOL.");
             const abnormalOverlay = document.getElementById('abnormal-overlay');
             if (abnormalOverlay) {
-                abnormalOverlay.style.display = 'flex'; // 強制讓阻斷遮罩在畫面上顯示（遮蔽全螢幕）
-                abnormalOverlay.classList.add('active'); // 啟用可能存在的 CSS 動態效果
+                abnormalOverlay.style.display = 'flex';
+                abnormalOverlay.classList.add('active');
             }
             throw new Error("CRITICAL SECURITY ERROR: 403 FORBIDDEN. TERMINAL LOCKED DOWN.");
         }
@@ -77,19 +114,19 @@ document.addEventListener('DOMContentLoaded', () => {
         btnElement.textContent = isLoading ? loadingText : originalText;
     }
 
-    // 🛡️ 【安保隔離矩陣】高危人員編制按鈕審查網關
+    // 🛡️ 【安保隔離矩陣】高危人員編制按鈕審查網關 (提早至初始化前置執行)
     function enforceAddPersonnelSecurity() {
         if (btnSwitchToAdd) {
-            // 👑 只有當前登入者的部門精準等於 'O5'，且安保等級達到 LEVEL 3 時，才獲准解鎖按鈕
             if (deptName === 'O5' && parseInt(clearanceLv) >= 3) {
                 console.log("👑 [SECURITY AUDIT] O5 最高議會成員身分核實。解鎖特工編制按鈕。");
-                btnSwitchToAdd.style.display = 'block'; // 釋放按鈕現形
+                btnSwitchToAdd.style.display = 'block'; 
             } else {
                 console.log("👤 [SECURITY AUDIT] 常規特工身分。沒收特工編制權限，從 DOM 物理移除按鈕實體。");
-                btnSwitchToAdd.remove(); // 物理銷毀節點，防範 F12 修改 CSS 繞過
+                btnSwitchToAdd.remove(); 
             }
         }
     }
+    enforceAddPersonnelSecurity(); // 💡 立即執行，防止畫面閃爍
 
     // ========================================================
     // 【功能一：🧭 Navbar 頁籤切換控制與全自動資料引渡】
@@ -150,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let scpAbortController = null;
 
     async function fetchAndRenderSCPs() {
+        if (!tableBody) return;
         const currentClearance = localStorage.getItem('clearance_lv') || '0'; 
         if (scpAbortController) scpAbortController.abort();
         scpAbortController = new AbortController();
@@ -218,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (lockdownOverlay) lockdownOverlay.classList.add('active');
             setButtonLoading(btnSubmitReport, true, "⚡ TRANSMITTING ENCRYPTED DATA...");
-            responseLog.textContent = "TRANSMITTING ENCRYPTED DATA PACKET TO BACKEND...";
+            if (responseLog) responseLog.textContent = "TRANSMITTING ENCRYPTED DATA PACKET TO BACKEND...";
 
             try {
                 const data = await requestAPI('http://localhost:5000/api/reports/upload', {
@@ -226,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(reportData)
                 });
-                responseLog.textContent = "SUCCESSFULLY WRITTEN TO MYSQL DATABASE!\n\nRESPONSE:\n" + JSON.stringify(data, null, 2);
+                if (responseLog) responseLog.textContent = "SUCCESSFULLY WRITTEN TO MYSQL DATABASE!\n\nRESPONSE:\n" + JSON.stringify(data, null, 2);
                 btnSubmitReport.textContent = "✔ INJECTION SUCCESS";
                 
                 alert("[安保憑證已核可] 研究報告已成功上傳至待審查核心。");
@@ -234,9 +272,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => setButtonLoading(btnSubmitReport, false, "", "EXECUTE MySQL DATA INJECTION"), 2000);
             } catch (err) {
                 setButtonLoading(btnSubmitReport, false, "", "EXECUTE MySQL DATA INJECTION");
-                responseLog.textContent = err.message.includes('401') 
-                    ? "401 UNAUTHORIZED: SESSION EXPIRED OR INVALID CREDENTIALS."
-                    : "CRITICAL CONTAMINATION ERROR:\n" + err;
+                if (responseLog) {
+                    responseLog.textContent = err.message.includes('401') 
+                        ? "401 UNAUTHORIZED: SESSION EXPIRED OR INVALID CREDENTIALS."
+                        : "CRITICAL CONTAMINATION ERROR:\n" + err;
+                }
             } finally {
                 if (lockdownOverlay) lockdownOverlay.classList.remove('active');
             }
@@ -324,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!memberTableBody) return;
         try {
             const data = await requestAPI('http://localhost:5000/api/admin/members');
-            memberSubtitle.textContent = `AUTHORIZED ACCESS: DEPLOYED OPERATIVES IN FIELD = ${data.length}`;
+            if (memberSubtitle) memberSubtitle.textContent = `AUTHORIZED ACCESS: DEPLOYED OPERATIVES IN FIELD = ${data.length}`;
             memberTableBody.innerHTML = '';
 
             data.forEach(m => {
@@ -347,18 +387,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 memberTableBody.appendChild(tr);
             });
-
-            document.querySelectorAll('.status-updater').forEach(selectElement => {
-                selectElement.addEventListener('change', (e) => {
-                    const targetId = e.target.getAttribute('data-id');
-                    const selectedStatus = e.target.value;
-                    if (selectedStatus) executeStatusPatch(targetId, selectedStatus, e.target); 
-                });
-            });
         } catch (err) {
             if (memberErrorMsg) memberErrorMsg.textContent = 'CRITICAL CORRUPTION: FAILED TO FETCH AGENT DIRECTORY. ' + err;
         }
     }
+
+    // 💡 優化：使用事件代理（Event Delegation）處理動態生成的狀態更新下拉選單
+    memberTableBody?.addEventListener('change', (e) => {
+        if (e.target.classList.contains('status-updater')) {
+            const targetId = e.target.getAttribute('data-id');
+            const selectedStatus = e.target.value;
+            if (selectedStatus) executeStatusPatch(targetId, selectedStatus, e.target);
+        }
+    });
 
     async function executeStatusPatch(memID, newStatus, selectElement) {
         const statusCell = document.getElementById(`status-${memID}`);
@@ -416,8 +457,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSwitchToAdd.addEventListener('click', () => {
             memberListSubview.style.display = 'none';
             memberAddSubview.style.display = 'block';
-            addMemberLog.textContent = "SYSTEM IDLE. AWAITING INJECTION OPERATION...";
-            addMemberLog.style.color = "#e0e0e0";
+            if (addMemberLog) {
+                addMemberLog.textContent = "SYSTEM IDLE. AWAITING INJECTION OPERATION...";
+                addMemberLog.style.color = "#e0e0e0";
+            }
             setButtonLoading(btnExecuteAdd, false, "", "EXECUTE REGISTRY INJECTION");
             if (btnCancelAdd) btnCancelAdd.disabled = false;
         });
@@ -440,16 +483,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const password     = document.getElementById('add-password').value;
 
             if (!dept_name || !password) {
-                addMemberLog.textContent = "[X] INJECTION CRITICAL ERROR:\nDEPARTMENT ACRONYM AND PASSWORD CANNOT BE VACANT.";
-                addMemberLog.style.color = "#ff5252";
+                if (addMemberLog) {
+                    addMemberLog.textContent = "[X] INJECTION CRITICAL ERROR:\nDEPARTMENT ACRONYM AND PASSWORD CANNOT BE VACANT.";
+                    addMemberLog.style.color = "#ff5252";
+                }
                 return;
             }
 
             if (lockdownOverlay) lockdownOverlay.classList.add('active');
             setButtonLoading(btnExecuteAdd, true, "⚡ INJECTING DATASTREAM...");
             if (btnCancelAdd) btnCancelAdd.disabled = true;
-            addMemberLog.textContent = "⚙️ INITIALIZING DATABASE INJECTION PROTOCOL...";
-            addMemberLog.style.color = "#ffc107";
+            if (addMemberLog) {
+                addMemberLog.textContent = "⚙️ INITIALIZING DATABASE INJECTION PROTOCOL...";
+                addMemberLog.style.color = "#ffc107";
+            }
 
             try {
                 const data = await requestAPI('http://localhost:5000/api/admin/members', {
@@ -458,8 +505,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ dept_name, clearance_lv, permission, mem_status, password })
                 });
 
-                addMemberLog.textContent = `🎉 SUCCESSFULLY INJECTED TO MYSQL DATABASE!\n\nGENERATED REGISTRY ID: ${data.memID}\nSTATUS: ${data.message.toUpperCase()}`;
-                addMemberLog.style.color = "#00e676";
+                if (addMemberLog) {
+                    addMemberLog.textContent = `🎉 SUCCESSFULLY INJECTED TO MYSQL DATABASE!\n\nGENERATED REGISTRY ID: ${data.memID}\nSTATUS: ${data.message.toUpperCase()}`;
+                    addMemberLog.style.color = "#00e676";
+                }
                 btnExecuteAdd.textContent = "✔ INJECTION COMPLETED";
                 
                 alert(`[資格已確認] 新進人員數據結構已順利生成。識別代號：${data.memID}`);
@@ -475,8 +524,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }, 2000);
             } catch (err) {
-                addMemberLog.textContent = `[X] INJECTION REFUSED:\n${err.message}`;
-                addMemberLog.style.color = "#ff5252";
+                if (addMemberLog) {
+                    addMemberLog.textContent = `[X] INJECTION REFUSED:\n${err.message}`;
+                    addMemberLog.style.color = "#ff5252";
+                }
                 setButtonLoading(btnExecuteAdd, false, "", "EXECUTE REGISTRY INJECTION");
                 if (btnCancelAdd) btnCancelAdd.disabled = false;
             } finally {
@@ -502,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
             o5ListBody.innerHTML = '';
 
             if (data.length === 0) {
-                o5ListBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #00e676; padding: 20px;">[CLEARED] 當前無任何待審查之數據封包。</td></tr>`;
+                o5ListBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #00e676; padding: 20px;">[CLEARED] 當前無 any 待審查之數據封包。</td></tr>`;
                 return;
             }
 
@@ -518,17 +569,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 o5ListBody.appendChild(tr);
             });
-
-            document.querySelectorAll('.btn-go-review').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const reportPayload = JSON.parse(e.target.getAttribute('data-payload'));
-                    openReviewWorkspace(reportPayload);
-                });
-            });
         } catch (err) {
             console.error('Fetch report list failed:', err);
         }
     }
+
+    // 💡 優化：使用事件代理處理 O5 列表動態審查按鈕點擊
+    o5ListBody?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-go-review')) {
+            const reportPayload = JSON.parse(e.target.getAttribute('data-payload'));
+            openReviewWorkspace(reportPayload);
+        }
+    });
 
     async function openReviewWorkspace(report) {
         activeReviewReportID = report.reportID;
@@ -668,6 +720,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // 📢 【全域初始化同步錨點】
     // =========================================================================
     console.log('[SYSTEM READY] 正在執行全域權限與分流初始化連線...');
-    enforceAddPersonnelSecurity(); // 💡 初始化時立刻執行高危按鈕物理隔離審查
     dispatchReportTab();
 });

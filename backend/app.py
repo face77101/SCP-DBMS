@@ -15,7 +15,7 @@ app = Flask(__name__, static_folder='../frontend', static_url_path='')
 # =========================================================================
 # ✅ 【核心優化】全域打通 CORS 預檢與 Session Cookie 共享
 # =========================================================================
-app.secret_key = os.getenv('EXTERNAL_API_KEY', os.urandom(24).hex())
+app.secret_key = os.getenv('SECRET_KEY')
 app.config.update(
     SESSION_COOKIE_SAMESITE='Lax',
     SESSION_COOKIE_SECURE=False,  # localhost 開發環境允許 HTTP 傳輸
