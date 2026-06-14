@@ -123,4 +123,24 @@ BEGIN
 
 END //
 
+CREATE TRIGGER check_member_clearance_lv
+BEFORE INSERT ON Member
+FOR EACH ROW
+BEGIN
+    -- 人員編級 D 級的安保等級只可以是0
+    if new.permission = 'D' and new.clearance_lv <> '0' then
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'clearance_lv should be 0';
+    end if;
+
+    -- O5 的人員編級必須為 A 級且安保等級 3
+    if new.dept_name = 'O5' then
+        if new.clearance_lv <> '3' or new.permission <> 'A' then
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'wrong clearance_lv or permission';
+        end if; 
+    end if;
+
+END //
+
 delimiter ;
