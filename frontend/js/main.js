@@ -1,98 +1,113 @@
 /**
  * =========================================================================
- * 🛡️ SCP FOUNDATION SYSTEM CONTROL INTERFACE (SECURITY OPTIMIZED v2.1)
+ * 🛡️ SCP FOUNDATION SYSTEM CONTROL INTERFACE (SECURITY OPTIMIZED v2.5)
  * =========================================================================
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    // ========================================================
-    // 👑 0. 【零信任前置防禦矩陣】身分驗證與精神狀態動態校準
-    // ========================================================
-    const clearanceLv = localStorage.getItem('clearance_lv');
-    const deptName = (localStorage.getItem('dept_name') || '').trim().toUpperCase(); 
-    const permission = (localStorage.getItem('permission') || '').trim().toUpperCase();
-
-    // 💡 【核心洗滌】強制去除前後空格並轉為絕對小寫，完美防堵字串對齊陷阱
-    let memStatus = localStorage.getItem('mem_status');
-    memStatus = memStatus ? memStatus.trim().toLowerCase() : 'normal';
-
-    console.log(`📡 [安保系統掃描] 特工身分: ${deptName}_LV${clearanceLv}_${permission} // 當前精神指標: [${memStatus.toUpperCase()}]`);
-
-    // A. 基礎憑證審查：若完全沒有登入資料，直接踢回登入頁
-    if (!clearanceLv) {
-        alert("ACCESS DENIED: No clearance token found.");
-        window.location.href = "index.html";
-        return;
-    }
-
-    // B. 相容性動態拼裝：保留原本 ID 讓原本的按鈕控制不崩潰，外觀完美呈現特工編號
+document.addEventListener('DOMContentLoaded', async () => {
+    // =========================================================================
+    // 👑 0. 【變數宣告陣列】集中宣告，杜絕 ReferenceError 與暫時性死區 (TDZ)
+    // =========================================================================
+    
+    // 零信任前置防禦矩陣相關 DOM
     const currentClearanceSpan = document.getElementById('current-clearance');
-    if (currentClearanceSpan) {
-        currentClearanceSpan.innerText = `USER: ${deptName}_LV${clearanceLv}_${permission}`;
-    }
-
-    // C. 🩺 【健康燈號與遮罩核心控制閉環】
     const psychIndicator = document.getElementById('psych-status-indicator');
     const abnormalOverlay = document.getElementById('abnormal-overlay');
+    const btnSwitchToAdd = document.getElementById('btn-switch-to-add');
+    const lockdownOverlay = document.getElementById('lockdown-overlay'); // 全域遮罩
 
-    // 🔴 狀況一：精神狀態明確異常 (abnormal) -> 物理鎖死
-    if (memStatus === 'abnormal') {
-        console.error("☣️ [CRITICAL LOCKOUT] OPERATIVE STATUS IS ABNORMAL. TERMINAL BLOCK PROTOCOL ACTIVATED.");
-        
-        if (psychIndicator) {
-            psychIndicator.classList.remove('status-green');
-            psychIndicator.classList.add('status-red'); // 點亮紅燈
+    // 功能一：Navbar 頁籤切換控制相關 DOM 與動態路由註冊表
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const tabFetchRegistry = {
+        'scp-view-section': () => fetchAndRenderSCPs(),
+        'sites-section': () => fetchAndRenderSiteStatus(),
+        'members-section': () => fetchAndRenderMembers(),
+        // 完美同步：報告頁籤動態加載阻斷網關
+        'report-upload-section': async () => {
+            const isO5 = currentClearanceSpan?.innerText.includes('O5');
+            if (isO5) {
+                await fetchAndRenderO5ReportList();
+            } else {
+                // 常規特工節制：注入仿真動態安保校準訊號
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
         }
-        if (abnormalOverlay) {
-            abnormalOverlay.style.display = 'flex'; // 強制顯現黑屏
-            abnormalOverlay.classList.add('active');
-        }
-        return; // ⚠️ 物理阻斷後面所有資料加載與事件綁定，但「不使用 throw」避免誤殺全域環境
-    } 
-    
-    // 🟢 狀況二：精神狀態完全正常 (normal) -> 安全放行
-    else {
-        console.log("🟢 [SECURITY AUDIT] SANITY CHECK PASSED. TERMINAL UNLOCKED.");
-        
-        if (psychIndicator) {
-            psychIndicator.classList.remove('status-red');
-            psychIndicator.classList.add('status-green'); // 點亮安全綠燈
-        }
-        if (abnormalOverlay) {
-            abnormalOverlay.style.display = 'none'; // ⚙️ 強制隱藏阻斷遮罩，確保正常人暢行無阻
-            abnormalOverlay.classList.remove('active');
-        }
+    };
+
+    // 功能二：SCP 列表動態渲染相關 DOM 與控制線
+    const scpTableBody = document.getElementById('scp-table-body');
+    let scpAbortController = null;
+
+    // 功能三：特工提交研究報告相關 DOM
+    const btnSubmitReport = document.getElementById('btn-submit-report');
+    const responseLog = document.getElementById('responseLog');
+
+    // 功能四：站點收容與動態監控相關 DOM
+    const grid = document.getElementById('site-grid');
+    const errorMsg = document.getElementById('site-error-msg');
+
+    // 功能五：基金會成員清單相關 DOM
+    const memberTableBody = document.getElementById('member-table-body');
+    const memberSubtitle = document.getElementById('member-subtitle');
+
+    // 功能六：新特工編制注入相關 DOM
+    const memberListSubview = document.getElementById('member-list-subview');
+    const memberAddSubview  = document.getElementById('member-add-subview');
+    const btnCancelAdd      = document.getElementById('btn-cancel-add');
+    const btnExecuteAdd     = document.getElementById('btn-execute-add');
+    const addMemberLog      = document.getElementById('add-member-log');
+
+    // 功能七：O5 審查決策核心相關 DOM 與暫存器
+    const o5ListBody = document.getElementById('o5-report-list-body');
+    const o5ListSubview = document.getElementById('subview-o5-list');
+    const o5DetailWorkspace = document.getElementById('subview-o5-detail-workspace');
+    const btnO5Save = document.getElementById('btn-o5-save');
+    const btnO5Reject = document.getElementById('btn-o5-reject');
+    let activeReviewReportID = null; 
+
+    // 功能八：用戶選單顯示與登出相關 DOM
+    const userTrigger = document.getElementById('user-menu-trigger');
+    const userMenu = document.getElementById('user-dropdown-menu');
+    const btnLogout = document.getElementById('btn-logout');
+
+
+    // =========================================================================
+    // 🎯 1. 【核心共用工具函式庫 (Helpers)】(優先宣告以供後續執行核心調用)
+    // =========================================================================
+
+    function initializeTerminalHelpers() {
+        bindLocalSearch('search-input', '.agent-row', ['fixed-row']);
+        bindLocalSearch('scp-search', '#scp-table-body tr', ['no-data-text', 'error-text']);
+        bindLocalSearch('member-search', '#member-table-body tr');
     }
 
-    // ========================================================
-    // 🎯 【核心共用工具函式庫 (Helpers)】
-    // ========================================================
-    const lockdownOverlay = document.getElementById('lockdown-overlay'); 
-    const btnSwitchToAdd = document.getElementById('btn-switch-to-add');   
-    
-    // 🔌 統一 API 請求元件
     async function requestAPI(url, options = {}) {
-        const defaultOptions = { credentials: 'include' };
-        const response = await fetch(url, { ...defaultOptions, ...options });
+        const combinedOptions = { credentials: 'include', ...options };
+        const response = await fetch(url, combinedOptions);
         
-        // 觸發 403 瞬間全螢幕封鎖
         if (response.status === 403) {
-            console.error("🚨 [SECURITY BREACH] DETECTED 403 FORBIDDEN. INITIALIZING LOCKDOWN PROTOCOL.");
-            const abnormalOverlay = document.getElementById('abnormal-overlay');
+            console.error("🚨 [SECURITY BREACH] 偵測到越權請求 (403 Forbidden)！");
             if (abnormalOverlay) {
                 abnormalOverlay.style.display = 'flex';
                 abnormalOverlay.classList.add('active');
             }
-            throw new Error("CRITICAL SECURITY ERROR: 403 FORBIDDEN. TERMINAL LOCKED DOWN.");
         }
 
         if (!response.ok) {
-            throw new Error(`HTTP AUTHENTICATION ERROR: ${response.status}`);
+            let backendMessage = `HTTP 通訊異常: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                if (errorData.message) backendMessage = errorData.message;
+            } catch (e) {
+                console.error('無法解析後端錯誤格式');
+            }
+            throw new Error(backendMessage);
         }
+        
         return response.json();
     }
 
-    // 🧠 統一本地模糊搜尋元件
     function bindLocalSearch(inputId, tableRowsSelector, skipClasses = []) {
         const input = document.getElementById(inputId);
         if (!input) return;
@@ -107,57 +122,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🔒 統一按鈕狀態安全鎖
     function setButtonLoading(btnElement, isLoading, loadingText = "⚡ TRANSMITTING...", originalText = "") {
         if (!btnElement) return;
         btnElement.disabled = isLoading;
         btnElement.textContent = isLoading ? loadingText : originalText;
     }
 
-    // 🛡️ 【安保隔離矩陣】高危人員編制按鈕審查網關 (提早至初始化前置執行)
-    function enforceAddPersonnelSecurity() {
-        if (btnSwitchToAdd) {
-            if (deptName === 'O5' && parseInt(clearanceLv) >= 3) {
-                console.log("👑 [SECURITY AUDIT] O5 最高議會成員身分核實。解鎖特工編制按鈕。");
-                btnSwitchToAdd.style.display = 'block'; 
-            } else {
-                console.log("👤 [SECURITY AUDIT] 常規特工身分。沒收特工編制權限，從 DOM 物理移除按鈕實體。");
-                btnSwitchToAdd.remove(); 
-            }
-        }
-    }
-    enforceAddPersonnelSecurity(); // 💡 立即執行，防止畫面閃爍
 
     // ========================================================
-    // 【功能一：🧭 Navbar 頁籤切換控制與全自動資料引渡】
+    // 【功能一：🧭 Navbar 頁籤切換控制與全隔離柵欄】
     // ========================================================
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    const tabFetchRegistry = {
-        'scp-view-section': () => fetchAndRenderSCPs(),
-        'sites-section': () => fetchAndRenderSiteStatus(),
-        'members-section': () => fetchAndRenderMembers(),
-        'report-upload-section': () => dispatchReportTab() 
-    };
-    
-    function dispatchReportTab() {
+    function dispatchReportTab(currentDeptName) {
         const agentUploadView = document.getElementById('subview-agent-upload');
         const o5ListSubview = document.getElementById('subview-o5-list');
         const o5DetailWorkspace = document.getElementById('subview-o5-detail-workspace');
-        const navBtn = document.querySelector('.nav-btn[data-target="report-upload-section"]');
+        const navBtn = document.querySelector('.nav-btn[data-target="report-section"]');
 
-        console.log(`[AUTH WATCHDOG] 當前讀取到的特工部門標籤: "${deptName}"`);
-
-        if (deptName === 'O5') {
-            console.log("👑 [O5 IDENTIFIED] 成功偵測到最高議會權限，啟動雙階段審查矩陣。");
+        if (currentDeptName === 'O5') {
             if (navBtn) navBtn.textContent = "REPORTS";
             if (agentUploadView) agentUploadView.style.display = 'none';
             if (o5ListSubview) o5ListSubview.style.display = 'block'; 
             if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'none';
-            fetchAndRenderO5ReportList(); 
+            // 提示：主序引導時會統一 await 加載，此處不執行獨立非同步發射
         } else {
-            console.log("👤 [AGENT IDENTIFIED] 常規特工權限，開啟研究報告提交網關。");
             if (navBtn) navBtn.textContent = "SUBMIT REPORT";
             if (agentUploadView) agentUploadView.style.display = 'block';
             if (o5ListSubview) o5ListSubview.style.display = 'none';
@@ -166,47 +153,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
+            const targetId = btn.getAttribute('data-target');
+            
+            // 開啟全域加載黑屏
+            if (tabFetchRegistry[targetId] && lockdownOverlay) {
+                lockdownOverlay.classList.add('active');
+                const titleEl = lockdownOverlay.querySelector('.lockdown-title');
+                const subEl = lockdownOverlay.querySelector('.lockdown-sub');
+                if (titleEl) titleEl.textContent = `📡 QUERYING RECONNAISSANCE PROTOCOL: ${targetId.toUpperCase()}`;
+                if (subEl) subEl.textContent = "DECRYPTION IN PROGRESS // FETCHING SECURE DATALINK...";
+            }
+
+            // UI 頁籤狀態轉換
             navButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            const targetId = btn.getAttribute('data-target');
             tabContents.forEach(content => {
                 content.classList.toggle('active', content.id === targetId);
             });
-            if (tabFetchRegistry[targetId]) {
-                console.log(`[NAVIGATOR] 自動引渡分頁數據鏈: ${targetId}`);
-                tabFetchRegistry[targetId]();
+
+            // 執行非同步數據同步，並實施強硬阻塞 (Barrier)
+            try {
+                if (tabFetchRegistry[targetId]) {
+                    await tabFetchRegistry[targetId]();
+                }
+            } catch (err) {
+                console.error("頁籤切換資料加載失敗:", err);
+            } finally {
+                // 完全加載完畢後開燈解除隔離
+                if (lockdownOverlay) {
+                    lockdownOverlay.classList.remove('active');
+                }
             }
         });
     });
 
+
     // ========================================================
     // 【功能二：SCP 列表動態渲染】
     // ========================================================
-    const tableBody = document.getElementById('scp-table-body');
-    let scpAbortController = null;
-
     async function fetchAndRenderSCPs() {
-        if (!tableBody) return;
-        const currentClearance = localStorage.getItem('clearance_lv') || '0'; 
+        if (!scpTableBody) return;
         if (scpAbortController) scpAbortController.abort();
         scpAbortController = new AbortController();
 
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="8" class="loading-text" style="color: #ffc107; text-align: center; padding: 20px; background: rgba(0,0,0,0.5);">
-                    📡 [SYSTEM] ENGAGING DATABASE SCAN FOR LEVEL ${currentClearance}... PLEASE HOLD
-                </td>
-            </tr>
-        `;
+        scpTableBody.innerHTML = `<tr><td colspan="8" class="loading-text" style="color: #ffc107; text-align: center; padding: 20px;">📡 [SYSTEM] ENGAGING DATABASE SCAN... PLEASE HOLD</td></tr>`;
 
         try {
-            const url = `/api/scp/search?clearance_lv=${currentClearance}`;
-            const result = await requestAPI(url, { signal: scpAbortController.signal });
-
-            tableBody.innerHTML = '';
+            const result = await requestAPI('/api/scp/search', { signal: scpAbortController.signal });
+            scpTableBody.innerHTML = '';
+            
             if (result.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="no-data-text" style="text-align: center; color: #ff3333;">NO REGISTRIES FOUND WITHIN LEVEL ${currentClearance}</td></tr>`;
+                scpTableBody.innerHTML = `<tr><td colspan="8" class="no-data-text" style="text-align: center; color: #ff3333;">NO REGISTRIES FOUND</td></tr>`;
                 return;
             }
 
@@ -214,32 +212,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="scp-id-col">${scp.scpID}</td>
-                    <td><span class="status-badge ${scp.scp_status.toLowerCase()}">${scp.scp_status}</span></td>
-                    <td><span class="threat-badge ${scp.threat_level.toLowerCase()}">${scp.threat_level}</span></td>
+                    <td><span class="status-badge ${scp.scp_status?.toLowerCase()}">${scp.scp_status}</span></td>
+                    <td><span class="threat-badge ${scp.threat_level?.toLowerCase()}">${scp.threat_level}</span></td>
                     <td class="center-text">${scp.clearance_lv}</td>
                     <td class="text-left">${scp.appearance || 'N/A'}</td>
                     <td class="text-left">${scp.abilities || 'N/A'}</td>
                     <td class="text-left">${scp.weakness || 'N/A'}</td>
                     <td class="text-left">${scp.others || 'N/A'}</td>
                 `;
-                tableBody.appendChild(tr);
+                scpTableBody.appendChild(tr);
             });
-        } catch (error) {
-            if (error.name === 'AbortError') return; 
-            console.error('SCP Fetch Error:', error);
-            tableBody.innerHTML = `<tr><td colspan="8" class="error-text" style="color: #ff3333; font-weight: bold; text-align: center;">CRITICAL: FAILED TO COMMUNICATE WITH DATABASE</td></tr>`;
+        } catch (err) {
+            if (err.name === 'AbortError') return; 
+            scpTableBody.innerHTML = `<tr><td colspan="8" class="error-text" style="color: #ff3333; text-align: center;">CRITICAL: ${err.message}</td></tr>`;
         }
     }
 
-    bindLocalSearch('scp-search', '#scp-table-body tr', ['no-data-text', 'error-text']);
-    fetchAndRenderSCPs();
 
     // ========================================================
-    // 【功能三：接管組員的 Report 提交邏輯】
+    // 【功能三：特工提交研究報告】
     // ========================================================
-    const btnSubmitReport = document.getElementById('btn-submit-report');
-    const responseLog = document.getElementById('responseLog');
-
     if (btnSubmitReport) {
         btnSubmitReport.addEventListener('click', async () => {
             const membersStr = document.getElementById('involvedMembers').value;
@@ -250,13 +242,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 weakness: document.getElementById('weakness').value,
                 appearance: document.getElementById('appearance').value,
                 others: document.getElementById('others').value,
-                involved_members: membersStr ? membersStr.split(',').map(s => s.trim()) : [],
-                required_lv: "1"
+                involved_members: membersStr ? membersStr.split(',').map(s => s.trim()) : []
             };
 
-            if (lockdownOverlay) lockdownOverlay.classList.add('active');
+            if (lockdownOverlay) {
+                lockdownOverlay.classList.add('active');
+                const titleEl = lockdownOverlay.querySelector('.lockdown-title');
+                const subEl = lockdownOverlay.querySelector('.lockdown-sub');
+                if (titleEl) titleEl.textContent = "⚠️ CLASSIFIED DATA TRANSACTION IN PROGRESS";
+                if (subEl) subEl.textContent = "AUTHORITY IDENTIFIED // COMMITTING...";
+            }
             setButtonLoading(btnSubmitReport, true, "⚡ TRANSMITTING ENCRYPTED DATA...");
-            if (responseLog) responseLog.textContent = "TRANSMITTING ENCRYPTED DATA PACKET TO BACKEND...";
 
             try {
                 const data = await requestAPI('/api/reports/upload', {
@@ -264,31 +260,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(reportData)
                 });
-                if (responseLog) responseLog.textContent = "SUCCESSFULLY WRITTEN TO MYSQL DATABASE!\n\nRESPONSE:\n" + JSON.stringify(data, null, 2);
-                btnSubmitReport.textContent = "✔ INJECTION SUCCESS";
                 
-                alert("[安保憑證已核可] 研究報告已成功上傳至待審查核心。");
+                if (responseLog) responseLog.textContent = `SUCCESS:\n${data.message}`;
+                btnSubmitReport.textContent = "✔ INJECTION SUCCESS";
+                alert(`[系統通知] ${data.message}`);
                 
                 setTimeout(() => setButtonLoading(btnSubmitReport, false, "", "EXECUTE MySQL DATA INJECTION"), 2000);
             } catch (err) {
                 setButtonLoading(btnSubmitReport, false, "", "EXECUTE MySQL DATA INJECTION");
-                if (responseLog) {
-                    responseLog.textContent = err.message.includes('401') 
-                        ? "401 UNAUTHORIZED: SESSION EXPIRED OR INVALID CREDENTIALS."
-                        : "CRITICAL CONTAMINATION ERROR:\n" + err;
-                }
+                if (responseLog) responseLog.textContent = `CRITICAL ERROR:\n${err.message}`;
+                alert(err.message);
             } finally {
                 if (lockdownOverlay) lockdownOverlay.classList.remove('active');
             }
         });
     }
 
-    // ========================================================
-    // 【功能四：🚨 站點收容與結構動態監控】
-    // ========================================================
-    const grid = document.getElementById('site-grid');
-    const errorMsg = document.getElementById('site-error-msg');
 
+    // ========================================================
+    // 【功能四：🚨 站點收容與動態監控】
+    // ========================================================
     async function fetchAndRenderSiteStatus() {
         if (!grid) return;
         try {
@@ -315,15 +306,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const isBroken = (row.door_status == 1 && row.structure === 'Broken');
                     return `
                         <tr class="${isBroken ? 'broken-containment' : ''}" style="${isBroken ? 'background: #5a1111 !important;' : ''}">
-                            <td style="padding: 10px; border-bottom: 1px solid #333; font-family: monospace;">${row.siteID}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #333;">${row.siteID}</td>
                             <td style="padding: 10px; border-bottom: 1px solid #333; font-weight: bold; color: #00bcd4;">${row.scpID ? `${row.scpID}` : '-'}</td>
-                            <td class="${row.site_status == 1 ? 'status-inuse' : 'status-idl'}" style="padding: 10px; border-bottom: 1px solid #333; color: ${row.site_status == 1 ? '#00e676' : '#a0a0a0'};">
-                                ${row.site_status == 1 ? 'INUSE' : 'IDL'}
-                            </td>
+                            <td style="padding: 10px; border-bottom: 1px solid #333; color: ${row.site_status == 1 ? '#00e676' : '#a0a0a0'};">${row.site_status == 1 ? 'INUSE' : 'IDL'}</td>
                             <td style="padding: 10px; border-bottom: 1px solid #333;">${row.door_status == 1 ? 'LOCK' : 'OPEN'}</td>
-                            <td class="${row.structure === 'Broken' ? 'struct-broke' : 'struct-funct'}" style="padding: 10px; border-bottom: 1px solid #333; color: ${row.structure === 'Broken' ? '#ff5252' : '#e0e0e0'};">
-                                ${row.structure === 'Broken' ? 'BROKE' : 'FUNCT.'}
-                            </td>
+                            <td style="padding: 10px; border-bottom: 1px solid #333; color: ${row.structure === 'Broken' ? '#ff5252' : '#e0e0e0'};">${row.structure === 'Broken' ? 'BROKE' : 'FUNCT.'}</td>
                         </tr>
                     `;
                 }).join('');
@@ -333,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 div.style.marginBottom = '1.5rem';
                 div.innerHTML = `
                     <div class="floor-title">FLOOR: ${floor}</div>
-                    <table class="scp-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                         <thead>
                             <tr style="background: rgba(0, 188, 212, 0.15); color: #00bcd4;">
                                 <th style="padding: 10px; text-align: left;">SITE_ID</th><th style="padding: 10px; text-align: left;">SCP_ID</th>
@@ -347,30 +334,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 grid.appendChild(div);
             });
         } catch (err) {
-            console.error('[Sites Matrix Error]', err);
-            grid.innerHTML = `<div class="loading-text" style="grid-column: span 2; color: #ff5252;">🚨 MONITOR SYSTEM CORRUPTED: ${err.message}</div>`;
-            if (errorMsg) errorMsg.textContent = 'CRITICAL CORRUPTION: FAILED TO FETCH SITE DIRECTORY. ' + err;
+            grid.innerHTML = `<div class="loading-text" style="grid-column: span 2; color: #ff5252;">🚨 MONITOR CORRUPTED</div>`;
+            if (errorMsg) errorMsg.textContent = `CRITICAL: ${err.message}`;
         }
     }
 
-    // ========================================================
-    // 【功能五：👥 基金會成員清單加載與狀態校準】
-    // ========================================================
-    const memberTableBody = document.getElementById('member-table-body');
-    const memberSubtitle = document.getElementById('member-subtitle');
-    const memberErrorMsg = document.getElementById('member-error-msg');
 
+    // ========================================================
+    // 【功能五：👥 基金會成員清單加載與核心去超連結】
+    // ========================================================
     async function fetchAndRenderMembers() {
         if (!memberTableBody) return;
         try {
             const data = await requestAPI('/api/admin/members');
-            if (memberSubtitle) memberSubtitle.textContent = `AUTHORIZED ACCESS: DEPLOYED OPERATIVES IN FIELD = ${data.length}`;
+            if (memberSubtitle) memberSubtitle.textContent = `AUTHORIZED ACCESS: DEPLOYED OPERATIVES = ${data.length}`;
             memberTableBody.innerHTML = '';
 
             data.forEach(m => {
                 const tr = document.createElement('tr');
+                // 核心去超連結修正：直接輸出純文字 ${m.memID}，不再封裝 <a> 標籤
                 tr.innerHTML = `
-                    <td class="scp-id-col"><a href="/member_detail.html?memID=${m.memID}">${m.memID}</a></td>
+                    <td class="scp-id-col">${m.memID}</td>
                     <td>${m.dept_name || 'Unassigned'}</td>
                     <td class="center-text">LEVEL ${m.clearance_lv}</td>
                     <td>${m.permission || 'Class D'}</td>
@@ -379,20 +363,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         <select class="status-updater" data-id="${m.memID}">
                             <option value="">-- SELECT --</option>
                             <option value="normal">Normal</option>
-                            <option value="abnormal">Abnormal (Cognitohazard)</option>
-                            <option value="treating">Treating (Amnestic)</option>
-                            <option value="dead">Dead / Terminated</option>
+                            <option value="abnormal">Abnormal</option>
+                            <option value="treating">Treating</option>
+                            <option value="dead">Dead</option>
+                            <option value="suspended">Suspended</option>
                         </select>
                     </td>
                 `;
                 memberTableBody.appendChild(tr);
             });
         } catch (err) {
-            if (memberErrorMsg) memberErrorMsg.textContent = 'CRITICAL CORRUPTION: FAILED TO FETCH AGENT DIRECTORY. ' + err;
+            memberTableBody.innerHTML = `<tr><td colspan="6" style="color:#ff5252; text-align:center;">${err.message}</td></tr>`;
         }
     }
 
-    // 💡 優化：使用事件代理（Event Delegation）處理動態生成的狀態更新下拉選單
     memberTableBody?.addEventListener('change', (e) => {
         if (e.target.classList.contains('status-updater')) {
             const targetId = e.target.getAttribute('data-id');
@@ -420,15 +404,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ mem_status: newStatus })
             });
             
-            if (data.message) {
-                if (statusCell) {
-                    statusCell.textContent = newStatus;
-                    statusCell.style.color = newStatus === 'normal' ? '#00e676' : '#ff5252';
-                }
-                alert(`[資格已確認] 特工編號 ${memID} 之生命/精神狀態已被成功同步校準。`);
+            if (statusCell) {
+                statusCell.textContent = newStatus;
+                statusCell.style.color = newStatus === 'normal' ? '#00e676' : '#ff5252';
             }
+            alert(`[狀態更新] ${data.message}`);
         } catch (err) {
-            alert('TRANSMISSION CONTAMINATION: ' + err.message);
+            alert(`變更失敗: ${err.message}`);
             if (statusCell) {
                 statusCell.textContent = originalText;
                 statusCell.style.color = originalColor;
@@ -442,27 +424,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    bindLocalSearch('member-search', '#member-table-body tr');
 
     // ========================================================
-    // 【功能六：🎭 子檢視區切換與新特工數據注入】
+    // 【功能六：🎭 新特工編制注入】
     // ========================================================
-    const memberListSubview = document.getElementById('member-list-subview');
-    const memberAddSubview  = document.getElementById('member-add-subview');
-    const btnCancelAdd      = document.getElementById('btn-cancel-add');
-    const btnExecuteAdd     = document.getElementById('btn-execute-add');
-    const addMemberLog      = document.getElementById('add-member-log');
-
     if (btnSwitchToAdd && memberListSubview && memberAddSubview) {
         btnSwitchToAdd.addEventListener('click', () => {
             memberListSubview.style.display = 'none';
             memberAddSubview.style.display = 'block';
             if (addMemberLog) {
-                addMemberLog.textContent = "SYSTEM IDLE. AWAITING INJECTION OPERATION...";
+                addMemberLog.textContent = "SYSTEM IDLE. AWAITING INJECTION...";
                 addMemberLog.style.color = "#e0e0e0";
             }
-            setButtonLoading(btnExecuteAdd, false, "", "EXECUTE REGISTRY INJECTION");
-            if (btnCancelAdd) btnCancelAdd.disabled = false;
         });
     }
 
@@ -483,20 +456,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const password     = document.getElementById('add-password').value;
 
             if (!dept_name || !password) {
-                if (addMemberLog) {
-                    addMemberLog.textContent = "[X] INJECTION CRITICAL ERROR:\nDEPARTMENT ACRONYM AND PASSWORD CANNOT BE VACANT.";
-                    addMemberLog.style.color = "#ff5252";
-                }
+                if (addMemberLog) addMemberLog.textContent = "[X] ERROR: FIELDS REQUIRED.";
                 return;
             }
 
             if (lockdownOverlay) lockdownOverlay.classList.add('active');
-            setButtonLoading(btnExecuteAdd, true, "⚡ INJECTING DATASTREAM...");
-            if (btnCancelAdd) btnCancelAdd.disabled = true;
-            if (addMemberLog) {
-                addMemberLog.textContent = "⚙️ INITIALIZING DATABASE INJECTION PROTOCOL...";
-                addMemberLog.style.color = "#ffc107";
-            }
+            setButtonLoading(btnExecuteAdd, true, "⚡ INJECTING...");
 
             try {
                 const data = await requestAPI('/api/admin/members', {
@@ -506,15 +471,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (addMemberLog) {
-                    addMemberLog.textContent = `🎉 SUCCESSFULLY INJECTED TO MYSQL DATABASE!\n\nGENERATED REGISTRY ID: ${data.memID}\nSTATUS: ${data.message.toUpperCase()}`;
+                    addMemberLog.textContent = `🎉 SUCCESS! ID: ${data.memID}`;
                     addMemberLog.style.color = "#00e676";
                 }
-                btnExecuteAdd.textContent = "✔ INJECTION COMPLETED";
-                
-                alert(`[資格已確認] 新進人員數據結構已順利生成。識別代號：${data.memID}`);
-
-                document.getElementById('add-dept-name').value = '';
-                document.getElementById('add-password').value = '';
+                alert(`[人員編制成功] 代號：${data.memID}`);
                 
                 setTimeout(() => {
                     if (memberAddSubview && memberListSubview) {
@@ -522,59 +482,57 @@ document.addEventListener('DOMContentLoaded', () => {
                         memberListSubview.style.display = 'block';
                         fetchAndRenderMembers();
                     }
-                }, 2000);
+                }, 1000);
             } catch (err) {
                 if (addMemberLog) {
-                    addMemberLog.textContent = `[X] INJECTION REFUSED:\n${err.message}`;
                     addMemberLog.style.color = "#ff5252";
+                    
+                    if (err.message.includes('wrong clearance_lv') || err.message.includes('should be 0')) {
+                        addMemberLog.textContent = "[X] INJECTION REFUSED: 操作不合法 (違反安保編制協議)。";
+                        alert("操作不合法：此人員權限與職位編制不符，請修正後再試。");
+                    } else {
+                        addMemberLog.textContent = `[X] INJECTION REFUSED:\n${err.message}`;
+                    }
                 }
-                setButtonLoading(btnExecuteAdd, false, "", "EXECUTE REGISTRY INJECTION");
-                if (btnCancelAdd) btnCancelAdd.disabled = false;
             } finally {
+                setButtonLoading(btnExecuteAdd, false, "", "EXECUTE REGISTRY INJECTION");
                 if (lockdownOverlay) lockdownOverlay.classList.remove('active');
             }
         });
     }
 
-    // =========================================================================
-    // 👑 【審查決策核心程序 - 核心固化】
-    // =========================================================================
-    const o5ListBody = document.getElementById('o5-report-list-body');
-    const o5ListSubview = document.getElementById('subview-o5-list');
-    const o5DetailWorkspace = document.getElementById('subview-o5-detail-workspace');
-    let activeReviewReportID = null; 
 
+    // =========================================================================
+    // 👑 【功能七：O5 審查決策核心】
+    // =========================================================================
     async function fetchAndRenderO5ReportList() {
         if (!o5ListBody) return;
         try {
             const data = await requestAPI('/api/admin/reports');
-            const subtitleEl = document.getElementById('o5-list-subtitle');
-            if (subtitleEl) subtitleEl.textContent = `LEVEL 3 CLEARANCE GRANTED: PENDING FILES = ${data.length}`;
             o5ListBody.innerHTML = '';
 
             if (data.length === 0) {
-                o5ListBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #00e676; padding: 20px;">[CLEARED] 當前無 any 待審查之數據封包。</td></tr>`;
+                o5ListBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #00e676; padding: 20px;">[CLEARED] 當前無待審查報告。</td></tr>`;
                 return;
             }
 
             data.forEach(r => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="padding: 10px; border-bottom: 1px solid #333; font-family: monospace;">${r.reportID}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #333; font-weight: bold; color: #00bcd4;">${r.scpID}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #333;">${r.reportID}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #333; color: #00bcd4;">${r.scpID}</td>
                     <td style="padding: 10px; border-bottom: 1px solid #333;">${r.title}</td>
                     <td style="padding: 10px; border-bottom: 1px solid #333; text-align: center;">
-                        <button class="terminal-btn btn-go-review" data-payload='${JSON.stringify(r)}' style="padding: 3px 10px; margin: 0;">VIEW DETAILS (審查)</button>
+                        <button class="terminal-btn btn-go-review" data-payload='${JSON.stringify(r)}' style="padding: 3px 10px; margin: 0;">VIEW DETAILS</button>
                     </td>
                 `;
                 o5ListBody.appendChild(tr);
             });
         } catch (err) {
-            console.error('Fetch report list failed:', err);
+            o5ListBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ff5252;">${err.message}</td></tr>`;
         }
     }
 
-    // 💡 優化：使用事件代理處理 O5 列表動態審查按鈕點擊
     o5ListBody?.addEventListener('click', (e) => {
         if (e.target.classList.contains('btn-go-review')) {
             const reportPayload = JSON.parse(e.target.getAttribute('data-payload'));
@@ -593,11 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('view-official-scpid').textContent = report.scpID;
         document.getElementById('view-official-status').textContent = "SEARCHING...";
-        document.getElementById('view-official-app').textContent = "LOADING...";
-        document.getElementById('view-official-abl').textContent = "LOADING...";
-        document.getElementById('view-official-weak').textContent = "LOADING...";
 
-        const clearanceContainer = document.getElementById('view-official-clearance-container');
         if (o5ListSubview) o5ListSubview.style.display = 'none';
         if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'block';
 
@@ -619,13 +573,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('view-official-weak').textContent = "[未登錄全新項目]";
             }
 
+            const clearanceContainer = document.getElementById('view-official-clearance-container');
             if (clearanceContainer) {
                 clearanceContainer.innerHTML = `
-                    <select id="update-scp-clearance-lv" style="padding: 5px; background: #111; color: #00bcd4; border: 1px solid #333; font-family: monospace;">
-                        <option value="0" ${currentLv === "0" ? "selected" : ""}>LEVEL 0 (Unrestricted)</option>
-                        <option value="1" ${currentLv === "1" ? "selected" : ""}>LEVEL 1 (Restricted)</option>
-                        <option value="2" ${currentLv === "2" ? "selected" : ""}>LEVEL 2 (Confidential)</option>
-                        <option value="3" ${currentLv === "3" ? "selected" : ""}>LEVEL 3 (Secret)</option>
+                    <select id="update-scp-clearance-lv" style="padding: 5px; background: #111; color: #00bcd4; border: 1px solid #333;">
+                        <option value="0" ${currentLv === "0" ? "selected" : ""}>LEVEL 0</option>
+                        <option value="1" ${currentLv === "1" ? "selected" : ""}>LEVEL 1</option>
+                        <option value="2" ${currentLv === "2" ? "selected" : ""}>LEVEL 2</option>
+                        <option value="3" ${currentLv === "3" ? "selected" : ""}>LEVEL 3</option>
                     </select>
                 `;
             }
@@ -640,22 +595,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndRenderO5ReportList();
     });
 
-    // =========================================================================
-    // 🕹️ 審查控制核心
-    // =========================================================================
-    const btnO5Save = document.getElementById('btn-o5-save');
-    const btnO5Reject = document.getElementById('btn-o5-reject');
-
     btnO5Save?.addEventListener('click', async () => {
         if (!activeReviewReportID) return;
         if (lockdownOverlay) lockdownOverlay.classList.add('active');
-        
-        btnO5Save.disabled = true;
-        btnO5Save.textContent = "⚡ MERGING PACKETS...";
-        if (btnO5Reject) btnO5Reject.disabled = true;
+        setButtonLoading(btnO5Save, true, "⚡ MERGING PACKETS...");
 
         try {
-            await requestAPI('/api/O5/approve', {
+            const data = await requestAPI('/api/O5/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -664,61 +610,161 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
             
-            alert(`[資格已確認] 報告數據已成功與核心主字典完成串接整併。`);
-            
+            alert(`[審查完成] ${data.message}`);
             await fetchAndRenderO5ReportList();
             if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'none';
             if (o5ListSubview) o5ListSubview.style.display = 'block';
             activeReviewReportID = null;
         } catch (err) {
-            alert('審查授權失敗: ' + err.message);
+            alert(`審查授權失敗: ${err.message}`);
         } finally {
             if (lockdownOverlay) lockdownOverlay.classList.remove('active');
-            if (btnO5Save) {
-                btnO5Save.disabled = false;
-                btnO5Save.textContent = "SAVE & MERGE (通過)";
-            }
-            if (btnO5Reject) btnO5Reject.disabled = false;
+            setButtonLoading(btnO5Save, false, "", "SAVE & MERGE (通過)");
         }
     });
 
     btnO5Reject?.addEventListener('click', async () => {
         if (!activeReviewReportID) return;
         if (!confirm('[WARNING] 確定要駁回並物理銷毀這篇研究報告嗎？此操作不可逆。')) return;
-        if (lockdownOverlay) lockdownOverlay.classList.add('active');
         
-        btnO5Reject.disabled = true;
-        btnO5Reject.textContent = "🔥 ERASING LOGS...";
-        if (btnO5Save) btnO5Save.disabled = true;
+        if (lockdownOverlay) lockdownOverlay.classList.add('active');
+        setButtonLoading(btnO5Reject, true, "🔥 ERASING LOGS...");
 
         try {
-            await requestAPI('/api/O5/reject', {
+            const data = await requestAPI('/api/O5/reject', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reportID: activeReviewReportID })
             });
             
-            alert(`[審查程序終止] 該報告封包已從暫存庫中完全物理銷毀。`);
-            
+            alert(`[處置完畢] ${data.message}`);
             await fetchAndRenderO5ReportList();
             if (o5DetailWorkspace) o5DetailWorkspace.style.display = 'none';
             if (o5ListSubview) o5ListSubview.style.display = 'block';
             activeReviewReportID = null;
         } catch (err) {
-            alert('駁回執行失敗: ' + err.message);
+            alert(`駁回執行失敗: ${err.message}`);
         } finally {
             if (lockdownOverlay) lockdownOverlay.classList.remove('active');
-            if (btnO5Reject) {
-                btnO5Reject.disabled = false;
-                btnO5Reject.textContent = "REJECT (駁回)";
-            }
-            if (btnO5Save) btnO5Save.disabled = false;
+            setButtonLoading(btnO5Reject, false, "", "REJECT (駁回)");
         }
     });
 
+
+    // ========================================================
+    // 🎭 【功能八：用戶選單顯示與登出】
+    // ========================================================
+    userTrigger?.addEventListener('click', (e) => {
+        e.stopPropagation(); 
+        const isHidden = userMenu.style.display === 'none';
+        userMenu.style.display = isHidden ? 'block' : 'none';
+    });
+
+    document.addEventListener('click', () => {
+        if (userMenu) userMenu.style.display = 'none';
+    });
+
+    btnLogout?.addEventListener('click', async () => {
+        try {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            alert("已解除安保連線。");
+            window.location.href = "index.html";
+        } catch (err) {
+            console.error("登出失敗", err);
+            window.location.href = "index.html"; 
+        }
+    });
+
+
     // =========================================================================
-    // 📢 【全域初始化同步錨點】
+    // 🛡️ 2. 【安全網關自我校準 (執行起點)】
     // =========================================================================
-    console.log('[SYSTEM READY] 正在執行全域權限與分流初始化連線...');
-    dispatchReportTab();
+    
+    // 開機隔離：立刻激活暗色加載矩陣
+    if (lockdownOverlay) {
+        lockdownOverlay.classList.add('active');
+        const titleEl = lockdownOverlay.querySelector('.lockdown-title');
+        const subEl = lockdownOverlay.querySelector('.lockdown-sub');
+        if (titleEl) titleEl.textContent = "📡 INITIALIZING SYSTEM SECURITY MATRIX";
+        if (subEl) subEl.textContent = "SYNCHRONIZING WITH CENTRAL DATABASE // PLEASE HOLD...";
+    }
+
+    console.log("📡 [安保系統啟動] 正在向安全資料庫核對特工身分...");
+
+    try {
+        const response = await fetch('/api/user-profile', {
+            method: 'GET',
+            credentials: 'include' 
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            alert("ACCESS DENIED: 無效的安保憑證，請重新登入。");
+            window.location.href = "index.html";
+            return;
+        }
+
+        const agentData = await response.json();
+        
+        const clearanceLv = agentData.clearance_lv;
+        const deptName = (agentData.dept_name || '').trim().toUpperCase();
+        const permission = (agentData.permission || '').trim().toUpperCase();
+        const memStatus = (agentData.mem_status || 'normal').trim().toLowerCase();
+
+        console.log(`📡 [資料庫同步成功] 特工身分: ${deptName}_LV${clearanceLv}_${permission} // 精神指標: [${memStatus.toUpperCase()}]`);
+
+        if (currentClearanceSpan) {
+            currentClearanceSpan.innerText = `USER: ${deptName}_LV${clearanceLv}_${permission}`;
+        }
+
+        // 🩺 【精神異常硬阻斷系統】
+        if (memStatus === 'abnormal') {
+            console.error("☣️ [CRITICAL LOCKOUT] OPERATIVE STATUS IS ABNORMAL. TERMINAL BLOCK PROTOCOL ACTIVATED.");
+            if (psychIndicator) {
+                psychIndicator.classList.remove('status-green');
+                psychIndicator.classList.add('status-red');
+            }
+            if (abnormalOverlay) {
+                abnormalOverlay.style.display = 'flex';
+                abnormalOverlay.classList.add('active');
+            }
+            if (lockdownOverlay) lockdownOverlay.classList.remove('active');
+            return; 
+        } else {
+            console.log("🟢 [SECURITY AUDIT] SANITY CHECK PASSED. TERMINAL UNLOCKED.");
+            if (psychIndicator) {
+                psychIndicator.classList.remove('status-red');
+                psychIndicator.classList.add('status-green');
+            }
+            if (abnormalOverlay) {
+                abnormalOverlay.style.display = 'none';
+                abnormalOverlay.classList.remove('active');
+            }
+        }
+
+        // 🛡️ 人員管理按鈕控制矩陣
+        if (btnSwitchToAdd) {
+            if (deptName === 'O5' && parseInt(clearanceLv) >= 3) {
+                btnSwitchToAdd.style.display = 'block'; 
+            } else {
+                btnSwitchToAdd.remove(); 
+            }
+        }
+
+        // 核心模組開機初始化
+        initializeTerminalHelpers();
+        dispatchReportTab(deptName);
+        
+        // 核心同步柵欄：強迫系統在黑屏內載入完首頁數據
+        await fetchAndRenderSCPs(); 
+
+    } catch (error) {
+        console.error('基金會內部網路連線錯誤:', error);
+        alert('無法連線至中央安全資料庫，終端機即將強制鎖定。');
+        if (abnormalOverlay) abnormalOverlay.style.display = 'flex';
+        return; 
+    } finally {
+        // 完成全部渲染，解除隔離狀態
+        if (lockdownOverlay) lockdownOverlay.classList.remove('active');
+    }
+
 });

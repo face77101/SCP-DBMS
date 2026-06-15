@@ -1,12 +1,12 @@
-/* ==========================================
-   基底與全域變數設定
-   ========================================== */
+/* =========================================================================
+   基底與全域變數設定 (Global Settings)
+   ========================================================================= */
 :root {
-    --bg-color: #0c1112;        /* 接近黑色的極深邃暗灰綠 */
+    --bg-color: #0c1112;         /* 接近黑色的極深邃暗灰綠 */
     --card-bg: rgba(100, 16, 16, 0.45); /* 血液暗紅，帶有半透明感 */
-    --topbar-bg: #5a0505;       /* 頂部暗紅警示條 */
-    --text-color: #9da3a6;      /* 基金會終端機冷灰色文字 */
-    --input-bg: #121617;       /* 輸入框深黑色 */
+    --topbar-bg: #5a0505;        /* 頂部暗紅警示條 */
+    --text-color: #9da3a6;       /* 基金會終端機冷灰色文字 */
+    --input-bg: #121617;        /* 輸入框深黑色 */
     --font-family: 'Courier New', Courier, monospace; /* 仿終端機等寬字體 */
 }
 
@@ -26,9 +26,9 @@ body {
     overflow: hidden;
 }
 
-/* ==========================================
+/* =========================================================================
    頂部導覽列 (Topbar)
-   ========================================== */
+   ========================================================================= */
 .topbar {
     background-color: var(--topbar-bg);
     padding: 10px 20px;
@@ -55,9 +55,9 @@ body {
     font-weight: bold;
 }
 
-/* ==========================================
+/* =========================================================================
    主內容區與登入卡片 (Login Card)
-   ========================================== */
+   ========================================================================= */
 .login-container {
     flex: 1;
     display: flex;
@@ -85,9 +85,9 @@ body {
     font-weight: bold;
 }
 
-/* ==========================================
+/* =========================================================================
    表單與輸入欄位 (Input Groups)
-   ========================================== */
+   ========================================================================= */
 .input-group {
     display: flex;
     align-items: center;
@@ -121,9 +121,9 @@ body {
     box-shadow: 0 0 8px rgba(163, 34, 34, 0.5);
 }
 
-/* ==========================================
+/* =========================================================================
    底部頁尾 (Footer)
-   ========================================== */
+   ========================================================================= */
 .footer {
     padding: 30px;
     text-align: center;
@@ -136,9 +136,10 @@ body {
     font-weight: bold;
     text-transform: uppercase;
 }
-/* ==========================================
+
+/* =========================================================================
    控制台專用版面配置 (Dashboard Grid)
-   ========================================== */
+   ========================================================================= */
 .dashboard-body {
     overflow-y: auto; /* 控制台資料很多，允許上下捲動 */
 }
@@ -183,9 +184,9 @@ body {
     letter-spacing: 1px;
 }
 
-/* ==========================================
+/* =========================================================================
    SCP 機密資料表格 (Classified Table)
-   ========================================== */
+   ========================================================================= */
 .table-section {
     background-color: var(--card-bg); /* 延用你的血液暗紅透明色 */
     border: 1px solid #7c1a1a;
@@ -242,9 +243,10 @@ body {
     font-weight: bold;
     padding: 40px 0 !important;
 }
-/* ==========================================
+
+/* =========================================================================
    🧭 Navbar 導覽分頁按鈕控制
-   ========================================== */
+   ========================================================================= */
 .dashboard-nav {
     display: flex;
     gap: 10px;
@@ -285,9 +287,9 @@ body {
     display: block; /* 只有加上 active 的分頁才看得到 */
 }
 
-/* ==========================================
+/* =========================================================================
    🖋️ 報告上傳表單整容樣式 (Tactical Form)
-   ========================================== */
+   ========================================================================= */
 .report-form-wrapper {
     background-color: var(--card-bg);
     border: 1px solid #7c1a1a;
@@ -392,30 +394,21 @@ body {
     word-break: break-all;
 }
 
-/* ======================================================== */
-/* ⚡ 終端機按鈕禁用狀態：變暗鎖定 + 鼠標變載入圓圈 (修正版)   */
-/* ======================================================== */
+/* =========================================================================
+   ⚡ 終端機禁用狀態 (Disabled States) - 已合併去重
+   ========================================================================= */
 .terminal-btn:disabled, 
 .nav-btn:disabled,
 button.terminal-btn:disabled,
-select.status-updater:disabled {
-    background: #1a1a1a !important;       /* 👈 變暗：換成最純粹的極深灰 */
-    color: #555555 !important;            /* 👈 字體顏色變暗沉灰字 */
-    border-color: #333333 !important;      /* 👈 邊框同步熄滅 */
-    cursor: wait !important;              /* 👈 【核心】滑鼠指上來立刻變成動態旋轉的小圓圈！ */
-    box-shadow: none !important;          /* 👈 物理拔除一切發光微芒 */
-    pointer-events: none !important;      /* 👈 雙重保險：徹底阻斷滑鼠一切點擊穿透 */
-    opacity: 0.6 !important;
-}
-
-/* 使用屬性選擇器與 !important 確保絕對權重 */
+select.status-updater:disabled,
 button[disabled], 
 button:disabled {
-    background-color: #1a1a1a !important;
-    color: #555 !important;
-    border-color: #333 !important;
-    cursor: wait !important;          /* 強制變圓圈 */
-    pointer-events: none !important; /* 強制關閉點擊穿透 */
+    background: #1a1a1a !important;       /* 變暗：換成最純粹的極深灰 */
+    color: #555555 !important;            /* 字體顏色變暗沉灰字 */
+    border-color: #333333 !important;      /* 邊框同步熄滅 */
+    cursor: wait !important;              /* 滑鼠指上來立刻變成動態旋轉的小圓圈！ */
+    box-shadow: none !important;          /* 物理拔除一切發光微芒 */
+    pointer-events: none !important;      /* 強制關閉並阻斷滑鼠一切點擊穿透 */
     opacity: 0.6 !important;
 }
 
@@ -428,14 +421,14 @@ button:disabled {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.75); /* 🟢 75% 純黑半透明，完美暗掉全網頁 */
-    z-index: 99999;                       /* 🟢 最高安保權重，強行壓在 Navbar 與所有卡片最上方 */
+    background-color: rgba(0, 0, 0, 0.75); /* 75% 純黑半透明，完美暗掉全網頁 */
+    z-index: 99999;                       /* 最高安保權重，強行壓在 Navbar 與所有卡片最上方 */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 1.5rem;
-    cursor: wait !important;              /* 🟢 游標進入全螢幕範圍立刻強制變成等待圓圈 */
+    cursor: wait !important;              /* 游標進入全螢幕範圍立刻強制變成等待圓圈 */
     
     /* 預設完全透明且不干擾點擊，只有被加上 .active 時才啟動鎖定 */
     opacity: 0;
@@ -446,7 +439,7 @@ button:disabled {
 /* 當啟動全量鎖定時 */
 .terminal-lockdown-overlay.active {
     opacity: 1;
-    pointer-events: auto;                 /* 🟢 沒收全螢幕所有的滑鼠點擊事件 */
+    pointer-events: auto;                 /* 沒收全螢幕所有的滑鼠點擊事件 */
 }
 
 /* 遮罩中央的科技感動態日誌與小圖章 */
@@ -486,14 +479,14 @@ button:disabled {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(15, 3, 3, 0.95);  /* 🔴 95% 極深邃暗紅黑，帶有濃烈警告感 */
-    z-index: 100000;                       /* 🔴 權權凌駕於一般傳輸遮罩，實施絕對隔離 */
+    background-color: rgba(15, 3, 3, 0.95);  /* 95% 極深邃暗紅黑，帶有濃烈警告感 */
+    z-index: 100000;                       /* 權權凌駕於一般傳輸遮罩，實施絕對隔離 */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 1.5rem;
-    cursor: not-allowed !important;        /* 🔴 滑鼠進入全螢幕範圍立刻強制變成「禁止符號」 */
+    cursor: not-allowed !important;        /* 滑鼠進入全螢幕範圍立刻強制變成「禁止符號」 */
     
     /* 預設隱藏 */
     opacity: 0;
@@ -542,3 +535,112 @@ button:disabled {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
 }
+
+/* ========================================================
+           🎨 終端機 UI 核心樣式微調
+           ======================================================== */
+        .site-monitor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+        @media (max-width: 900px) {
+            .site-monitor-grid { grid-template-columns: 1fr; }
+        }
+        .floor-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+        .floor-title {
+            margin-bottom: 1rem;
+            color: #00bcd4;
+            font-size: 18px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+        .scp-table tbody tr.broken-containment {
+            background: #5a1111 !important;
+        }
+        .struct-broke { color: #ff5252; font-weight: bold; }
+        .struct-funct { color: #e0e0e0; }
+        .status-inuse { color: #00e676; font-weight: bold; }
+        .status-idl { color: #a0a0a0; }
+
+        /* 🧪 成員名單下拉選單與連結的終端機外觀 */
+        .scp-table select {
+            background: #222;
+            color: #00bcd4;
+            border: 1px solid #444;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            cursor: pointer;
+            outline: none;
+        }
+        .scp-table select:focus {
+            border-color: #00bcd4;
+        }
+        .scp-table td a {
+            color: #00bcd4;
+            text-decoration: none;
+        }
+        .scp-table td a:hover {
+            text-decoration: underline;
+            text-shadow: 0 0 4px rgba(0, 188, 212, 0.5);
+        }
+
+        /* 🟢 新增：精神狀態指示燈的燈號顏色 */
+        .status-green { color: #00e676; text-shadow: 0 0 8px #00e676; margin-right: 15px;}
+        .status-red { color: #ff5252; text-shadow: 0 0 8px #ff5252; margin-right: 15px;}
+    /* ========================================================
+           👑 頂部列水平聯防排版核心 (Flexbox)
+           ======================================================== */
+        .topbar {
+            display: flex;
+            justify-content: space-between; /* 讓左邊 Logo 與右邊控制區分居兩側 */
+            align-items: center;            /* 讓所有元件在垂直方向上居中對齊 */
+            padding: 10px 20px;
+            border-bottom: 2px solid #333;
+        }
+
+        /* 右側控制總線：強迫分頁標籤與身分狀態水平排列 */
+        .header-right-bus {
+            display: flex;
+            align-items: center;            /* 水平居中對齊 */
+            gap: 2.5rem;                    /* 標籤與身分資訊之間的間距，可自行微調 */
+        }
+
+        /* 讓導航標籤內部的按鈕也維持水平排列 */
+        .dashboard-nav {
+            display: flex;
+            gap: 0.5rem;                    /* 按鈕與按鈕之間的微小間距 */
+        }
+
+        /* 身分狀態欄位：讓綠燈指示燈與 USER 字樣緊密排在水平線上 */
+        .user-status {
+            display: flex;
+            align-items: center;
+            font-family: monospace;         /* 等寬字體營造科幻感 */
+            font-size: 13px;
+            letter-spacing: 1px;
+            white-space: nowrap;            /* 防止因為視窗縮小而自動斷行 */
+        }
+
+        /* 指示燈微調：跟後面的 USER 字樣保持適當間距 */
+        #psych-status-indicator {
+            margin-right: 12px;
+        }
+        /* 讓選單出現時更平滑 */
+        #user-dropdown-menu {
+            /* 讓選單永遠出現在觸發點的下方 */
+        top: 100%; 
+        right: 0;
+        margin-top: 10px; /* 增加一點點跟 USER 字樣的垂直間距 */
+        }
+        #btn-logout:hover {
+            background: #d60000 !important;
+        }  
